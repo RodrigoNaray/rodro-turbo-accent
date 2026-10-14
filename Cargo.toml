@@ -1,0 +1,9 @@
+[package]
+name = "quick-accent-local-ui"
+version = "0.3.0"
+edition = "2021"
+description = "Interfaz Rust para Quick Accent Local (motor IBus en GNOME/Wayland)"
+license = "MIT"
+
+[dependencies]
+eframe = { version = "0.31.1", default-features = false, features = ["default_fonts", "glow", "x11", "wayland"] }

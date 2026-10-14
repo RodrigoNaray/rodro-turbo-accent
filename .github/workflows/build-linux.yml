@@ -1,0 +1,31 @@
+name: Compilar Linux
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dependencias para la ventana (solo en el runner)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libx11-dev libxi-dev libxcursor-dev libxrandr-dev libxkbcommon-dev libwayland-dev libgl1-mesa-dev
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Pruebas Python
+        run: python3 src/assets/quick_accent.py --self-test
+      - name: Compilar aplicación Rust
+        run: cargo build --release
+      - name: Empaquetar binario
+        run: |
+          mkdir -p dist
+          cp target/release/quick-accent-local-ui dist/
+          cp README.md dist/
+          tar -C dist -czf quick-accent-local-linux-x86_64.tar.gz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: quick-accent-local-linux-x86_64
+          path: quick-accent-local-linux-x86_64.tar.gz
