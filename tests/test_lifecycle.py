@@ -154,12 +154,63 @@ class LifecycleTests(unittest.TestCase):
 
 
 class AccentTests(unittest.TestCase):
+    def setUp(self):
+        self.now = 0.0
+
+    def state(self):
+        return engine.AccentState(clock=lambda: self.now)
+
     def test_all_accents_and_releases(self):
         for base, accent in engine.ACCENTS.items():
-            state = engine.AccentState()
+            self.now = 0.0
+            state = self.state()
             state.event(ord(base), 38, 0)
+            self.now = 0.250
             self.assertEqual(state.event(32, 65, 0)[1][-1], ("commit", accent))
             self.assertEqual(state.event(ord(base), 38, state.RELEASE_MASK), (False, []))
+
+    def test_early_space_keeps_plain_letter_and_passes_space(self):
+        for base in engine.ACCENTS:
+            self.now = 0.0
+            state = self.state()
+            state.event(ord(base), 38, 0)
+            self.now = 0.249
+            self.assertEqual(state.event(32, 65, 0),
+                             (False, [("clear", ""), ("commit", base)]))
+            self.assertEqual(state.event(ord(base), 38, state.RELEASE_MASK), (False, []))
+
+    def test_early_space_does_not_leave_a_late_accent(self):
+        state = self.state()
+        state.event(ord("a"), 38, 0)
+        self.now = 0.050
+        state.event(32, 65, 0)
+        self.now = 0.500
+        self.assertEqual(state.event(32, 65, 0), (False, []))
+        self.assertEqual(state.flush(), [])
+
+    def test_repeat_does_not_restart_hold_timer(self):
+        state = self.state()
+        state.event(ord("a"), 38, 0)
+        self.now = 0.200
+        self.assertEqual(state.event(ord("a"), 38, 0), (True, []))
+        self.now = 0.250
+        self.assertEqual(state.event(32, 65, 0)[1][-1], ("commit", "á"))
+
+    def test_release_before_space_never_accents(self):
+        state = self.state()
+        state.event(ord("n"), 57, 0)
+        self.now = 1.0
+        self.assertEqual(state.event(ord("n"), 57, state.RELEASE_MASK)[1][-1], ("commit", "n"))
+        self.assertEqual(state.event(32, 65, 0), (False, []))
+
+    def test_next_letter_gets_its_own_hold_timer(self):
+        state = self.state()
+        state.event(ord("a"), 38, 0)
+        self.now = 0.300
+        state.event(ord("n"), 57, 0)
+        self.now = 0.400
+        self.assertEqual(state.event(32, 65, 0),
+                         (False, [("clear", ""), ("commit", "n")]))
 
     def test_flush_commits_once_on_disable(self):
         state = engine.AccentState()

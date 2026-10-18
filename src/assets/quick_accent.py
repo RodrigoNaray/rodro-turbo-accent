@@ -15,6 +15,7 @@ from xml.sax.saxutils import escape
 
 ENGINE_NAME = "quick-accent-local"
 DBUS_NAME = "org.freedesktop.IBus.QuickAccentLocal"
+MIN_HOLD_SECONDS = 0.250
 ACCENTS = {
     "a": "á", "e": "é", "i": "í", "o": "ó", "u": "ú", "n": "ñ",
     "A": "Á", "E": "É", "I": "Í", "O": "Ó", "U": "Ú", "N": "Ñ",
@@ -32,13 +33,15 @@ class AccentState:
     ALT_MASK = 1 << 3
     SUPER_MASK = 1 << 6
 
-    def __init__(self):
-        self.pending: tuple[str, int] | None = None
+    def __init__(self, min_hold_seconds=MIN_HOLD_SECONDS, clock=time.monotonic):
+        self.min_hold_seconds = min_hold_seconds
+        self.clock = clock
+        self.pending: tuple[str, int, float] | None = None
 
     def flush(self):
         if self.pending is None:
             return []
-        char, _ = self.pending
+        char, _, _ = self.pending
         self.pending = None
         return [("clear", ""), ("commit", char)]
 
@@ -58,8 +61,9 @@ class AccentState:
         is_modified = bool(state & special_modifiers)
 
         if self.pending is not None:
-            char, pending_keycode = self.pending
-            if keyval == 0x20 and not is_modified:  # Espacio mientras la letra sigue pulsada
+            char, pending_keycode, pressed_at = self.pending
+            if (keyval == 0x20 and not is_modified
+                    and self.clock() - pressed_at >= self.min_hold_seconds):
                 self.pending = None
                 return True, [("clear", ""), ("commit", ACCENTS[char])]
             if keycode == pending_keycode:  # repetición automática de la letra mantenida
@@ -68,7 +72,7 @@ class AccentState:
 
         if not is_modified and keyval < 128 and chr(keyval) in ACCENTS:
             char = chr(keyval)
-            self.pending = (char, keycode)
+            self.pending = (char, keycode, self.clock())
             actions.append(("preedit", char))
             return True, actions
 
@@ -308,15 +312,18 @@ def diagnose():
 
 if __name__ == "__main__":
     if sys.argv[1:] == ["--self-test"]:
-        a = AccentState()
+        now = [0.0]
+        a = AccentState(clock=lambda: now[0])
         assert a.event(ord("a"), 38, 0) == (True, [("preedit", "a")])
+        now[0] = MIN_HOLD_SECONDS
         assert a.event(ord(" "), 65, 0) == (True, [("clear", ""), ("commit", "á")])
         assert a.event(ord("a"), 38, a.RELEASE_MASK) == (False, [])
         b = AccentState()
         b.event(ord("n"), 57, 0)
         assert b.event(ord("n"), 57, b.RELEASE_MASK) == (True, [("clear", ""), ("commit", "n")])
-        c = AccentState()
+        c = AccentState(clock=lambda: now[0])
         c.event(ord("E"), 26, 1)
+        now[0] += MIN_HOLD_SECONDS
         assert c.event(32, 65, 0)[1][-1] == ("commit", "É")
         d = AccentState()
         d.event(ord("a"), 38, 0)

@@ -126,7 +126,7 @@ impl eframe::App for QuickAccentApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.add_space(10.0);
             ui.heading("Quick Accent Local");
-            ui.label("Mantener una vocal o N + Espacio → á é í ó ú ñ");
+            ui.label("Mantener una vocal o N durante 250 ms + Espacio → á é í ó ú ñ");
             ui.label("Distribución US · sin sudo · sin acceso directo a /dev/input");
             ui.add_space(12.0);
 

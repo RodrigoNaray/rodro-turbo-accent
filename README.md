@@ -8,7 +8,8 @@ App de escritorio con una sola ventana para **Instalar · On · Off · Estado ·
 
 ## Función
 
-- Mantener `a` y pulsar espacio, sin soltar `a` → `á`.
+- Mantener `a` al menos **250 ms** y pulsar espacio, sin soltar `a` → `á`.
+- Si Espacio llega antes de los 250 ms, se escriben la letra normal y el espacio. Así se evitan acentos por el solapamiento de teclas al separar palabras.
 - `e/i/o/u/n` → `é/í/ó/ú/ñ`; incluye mayúsculas.
 - Pulsar y soltar la letra sin espacio → la letra normal.
 - Mantiene la disposición US; no instala ni cambia la distribución física.
