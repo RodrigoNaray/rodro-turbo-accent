@@ -31,7 +31,9 @@ jobs:
         run: |
           mkdir -p dist
           cp target/release/quick-accent-local-ui dist/
-          cp README.md dist/
+          cp README.md LICENSE dist/
+          mkdir -p dist/docs
+          cp docs/v0.4-review.md dist/docs/
           tar -C dist -czf quick-accent-local-linux-x86_64.tar.gz .
       - uses: actions/upload-artifact@v4
         with:

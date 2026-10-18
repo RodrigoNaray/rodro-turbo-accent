@@ -16,7 +16,7 @@ La ventana se puede redimensionar: los botones se distribuyen según el ancho, m
 - Pulsar y soltar la letra sin espacio → la letra normal.
 - Mantiene la disposición US; no instala ni cambia la distribución física.
 
-El motor genera un carácter *preedit* en IBus y lo confirma o sustituye. Dependemos de que cada aplicación entregue los eventos y de que el motor esté activo. El motor se conserva de la versión probada. La versión 0.4 tiene pruebas con un IBus privado, pero **el inicio de sesión y el comportamiento en aplicaciones reales todavía requieren validación en tu sesión de GNOME**.
+El motor genera un carácter *preedit* en IBus y lo confirma o sustituye. Dependemos de que cada aplicación entregue los eventos y de que el motor esté activo. La versión 0.4 cuenta con pruebas automatizadas y con IBus privado. El usuario confirmó instalación, acentos, inicio automático después del arranque, On/Off y la interfaz en su equipo Linux Mint con GNOME/Wayland. Esta validación se limita a ese entorno; se distribuye como **versión experimental**.
 
 ## Descarga sin instalar Rust en el equipo
 
@@ -24,7 +24,7 @@ Al subir este proyecto a un repositorio privado de GitHub:
 
 1. Abre **Actions** → **Compilar Linux** → **Run workflow**.
 2. Al terminar, descarga el artifact `quick-accent-local-linux-x86_64` (GitHub lo entrega comprimido).
-3. Extrae el archivo `.tar.gz` incluido; contiene `quick-accent-local-ui` y este README.
+3. Extrae el archivo `.tar.gz` incluido; contiene `quick-accent-local-ui`, este README, `LICENSE` y la carpeta `docs`.
 4. Desde la carpeta donde lo extrajiste, ejecuta:
 
    ```bash
@@ -37,6 +37,14 @@ Al subir este proyecto a un repositorio privado de GitHub:
 El instalador está **dentro de la ventana**; no tienes que ejecutar scripts descargados de Internet ni usar `sudo`. Para usarlo necesitas IBus y Python GI instalados (en tu Mint ya están).
 
 > Los ejecutables compilados por GitHub Actions son artefactos de CI, no lanzamientos auditados. Verifica que el workflow haya compilado el código de tu repositorio y no compartas el artefacto como software validado antes de probarlo.
+
+## Distribución experimental
+
+Podés compartir el `.tar.gz` con otros usuarios de **Linux x86_64, GNOME/Wayland y teclado US**, indicando que el entorno comprobado es Linux Mint. El ejecutable incluye el instalador: no se necesita Rust para usarlo.
+
+El equipo de destino debe tener **IBus, Python 3 con GI y el typelib IBus 1.0, y systemd de usuario**, además de las bibliotecas gráficas habituales de una sesión GNOME. El instalador comprueba sus requisitos y no instala paquetes del sistema. Windows sigue sin backend implementado.
+
+Conservá `README.md`, `LICENSE` y `docs` junto al ejecutable al redistribuir el paquete. Antes de anunciar compatibilidad con otras distribuciones o versiones, comprobá instalación, escritura, On/Off, reinicio y desinstalación en esos equipos.
 
 ## Para desarrolladores
 
@@ -111,7 +119,7 @@ systemctl --user disable --now quick-accent-local.service
 
 Estos comandos no modifican distribuciones de GNOME ni instalan paquetes.
 
-La revisión técnica, límites y pruebas manuales pendientes están en [docs/v0.4-review.md](docs/v0.4-review.md).
+La revisión técnica, los límites y el protocolo de validación en otros equipos están en [docs/v0.4-review.md](docs/v0.4-review.md).
 
 ## Próximo paso: Windows
 
