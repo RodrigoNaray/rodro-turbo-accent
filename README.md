@@ -2,6 +2,8 @@
 
 App de escritorio con una sola ventana para **Instalar · On · Off · Estado · Logs · Desinstalar**.
 
+La ventana se puede redimensionar: los botones se distribuyen según el ancho, mantienen un ancho máximo y el texto usa un tamaño mayor para facilitar la lectura. El texto se ajusta y aparece desplazamiento vertical si falta altura. El área de logs crece al agrandar la ventana. La flecha de la combinación se dibuja como un icono para evitar símbolos faltantes en la fuente.
+
 **Linux (GNOME/Wayland):** interfaz escrita en Rust usando egui. Conserva el motor IBus/Python probado en Linux Mint. Al instalarlo, copia **solo archivos de tu usuario**, crea un servicio `systemd --user` y añade el lanzador del menú de aplicaciones. No usa `sudo`, no añade grupos y no solicita acceso directo a `/dev/input`.
 
 **Windows:** **todavía no implementado**. La interfaz Rust puede compilarse en Windows, pero los controles no instalan un motor allí. Se necesita un adaptador nativo Win32 que procese de forma segura la combinación letra mantenida + espacio. **No desinstales PowerToys basándote en esta versión**.
