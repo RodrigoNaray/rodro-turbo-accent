@@ -1,4 +1,4 @@
-# Quick Accent Local — GUI Rust + motor IBus (0.3 experimental)
+# Quick Accent Local — GUI Rust + motor IBus (0.4 experimental)
 
 App de escritorio con una sola ventana para **Instalar · On · Off · Estado · Logs · Desinstalar**.
 
@@ -13,7 +13,7 @@ App de escritorio con una sola ventana para **Instalar · On · Off · Estado ·
 - Pulsar y soltar la letra sin espacio → la letra normal.
 - Mantiene la disposición US; no instala ni cambia la distribución física.
 
-El motor genera un carácter *preedit* en IBus y lo confirma o sustituye. Dependemos de que cada aplicación entregue los eventos y de que el motor esté activo. El prototipo anterior funcionó para el usuario en GNOME/Wayland; **esta integración de escritorio y el inicio automático no están todavía comprobados en su máquina**.
+El motor genera un carácter *preedit* en IBus y lo confirma o sustituye. Dependemos de que cada aplicación entregue los eventos y de que el motor esté activo. El motor se conserva de la versión probada. La versión 0.4 tiene pruebas con un IBus privado, pero **el inicio de sesión y el comportamiento en aplicaciones reales todavía requieren validación en tu sesión de GNOME**.
 
 ## Descarga sin instalar Rust en el equipo
 
@@ -41,8 +41,19 @@ Con la toolchain oficial de Rust y las bibliotecas de compilación requeridas po
 
 ```bash
 python3 src/assets/quick_accent.py --self-test
-cargo run --release
+python3 -m unittest discover -s tests -v
+/usr/bin/python3 tests/ibus_smoke.py
+cargo fmt --all -- --check
+cargo test --locked
+cargo clippy --locked --all-targets -- -D warnings
+cargo build --release --locked
+# Abrir la GUI solo cuando se quiera gestionar la instalación real:
+cargo run --release --locked
 ```
+
+Para instalar Rust localmente usá [rustup oficial](https://rust-lang.org/tools/install/), con las opciones `--profile minimal --component rustfmt,clippy --no-modify-path`. Instala en `~/.cargo` y `~/.rustup`, sin sudo. Para habilitarlo solo en la terminal actual: `source "$HOME/.cargo/env"`. No hace falta editar `.zshrc`. Se puede retirar con `~/.cargo/bin/rustup self uninstall`.
+
+`cargo test` usa comandos simulados con HOME/runtime temporales: no controla servicios reales. `tests/ibus_smoke.py` levanta un D-Bus y un IBus privados y configura US solo en carpetas temporales; requiere `ibus-daemon`, `dbus-run-session`, Python GI y el typelib IBus. El sandbox puede pedir autorización para crear sockets. No toca la sesión de GNOME ni el servicio instalado.
 
 **No se ejecuta con sudo.** En esta versión el motor se guarda embebido dentro del ejecutable Rust con `include_str!` y se extrae durante la instalación; basta distribuir el binario una vez compilado. Durante el build se requieren librerías nativas de ventanas, pero no hacen falta para usar el binario en una instalación compatible.
 
@@ -51,13 +62,15 @@ cargo run --release
 | Botón | Comportamiento |
 | --- | --- |
 | Instalar | Comprueba IBus/Python, copia el ejecutable y motor, crea lanzador y servicio, y lo activa |
-| On | `systemctl --user enable --now`, selecciona el motor IBus y lo deja activo para sesiones futuras |
-| Off | Vuelve a `xkb:us::eng`, detiene el servicio y desactiva el autoinicio |
-| Actualizar estado | Muestra servicio, autoinicio y motor IBus activos |
+| On | Habilita/inicia el servicio; espera la selección IBus y la verifica. Reinicia el motor si ya corría sin estar seleccionado |
+| Off | Restaura US si corresponde, coordina la parada, desactiva el autoinicio y verifica la selección después de salir |
+| Actualizar estado | Muestra servicio, autoinicio, motor seleccionado y registro dinámico IBus |
 | Logs | Muestra las últimas líneas de `journalctl --user -u quick-accent-local.service` |
 | Desinstalar | Restaura US (si está activo), deshabilita el servicio, borra únicamente archivos propiedad del proyecto |
 
-**Cerrar la ventana no detiene el motor.** Si lo dejaste en On, se inicia al entrar a tu sesión (no antes de iniciar sesión o al encender físicamente la computadora). Si lo dejaste en Off, permanecerá apagado al volver a entrar.
+**Cerrar la ventana no detiene el motor.** Mientras una operación está pendiente, los controles quedan bloqueados y la ventana espera para cerrarse. Al terminar, cerrar la ventana no afecta al servicio. Dos ventanas no pueden modificar la instalación simultáneamente.
+
+Si lo dejaste en On, se inicia al entrar a tu sesión (no antes de iniciar sesión o al encender físicamente la computadora). Si lo dejaste en Off, permanecerá apagado al volver a entrar.
 
 ### Archivos instalados en Linux
 
@@ -66,6 +79,8 @@ cargo run --release
 - `~/.local/share/quick-accent-local/.owned-by-quick-accent-local`
 - `~/.local/share/applications/quick-accent-local.desktop`
 - `~/.config/systemd/user/quick-accent-local.service`
+
+El bloqueo de operaciones usa `$XDG_RUNTIME_DIR/quick-accent-local.lock`: es transitorio, se libera al salir del proceso y el sistema limpia el archivo al finalizar la sesión. No contiene datos de escritura.
 
 No se modifica `~/.zshrc`, GNOME Tweaks, los repositorios APT, los controladores del teclado ni los grupos del usuario. El ZIP/carpeta de proyecto original queda fuera de la desinstalación.
 
@@ -76,7 +91,10 @@ No se modifica `~/.zshrc`, GNOME Tweaks, los repositorios APT, los controladores
 - Está orientado a **GNOME + Wayland + IBus**. El motor IBus y GNOME pueden competir al restaurar el método de entrada al iniciar sesión. Es importante probar cerrar sesión y entrar de nuevo.
 - No está probado en una gran variedad de programas. Probá en Editor, Firefox y un IDE antes de confiar en él para documentos importantes.
 - El botón **Instalar** reemplaza una instalación previa del mismo proyecto, pero verifica firmas/marcadores de los archivos de texto conocidos y evita sobrescribir rutas inesperadas. No es un sistema de actualizaciones firmado.
-- `--auto-activate` espera cuatro segundos desde que se registra el motor. Si GNOME cambia el método luego, toca On en la ventana.
+- `--auto-activate` consulta y selecciona IBus de forma asíncrona, con una operación en vuelo y tiempos de espera de dos segundos. Durante los primeros 30 segundos puede volver a seleccionar Quick Accent si GNOME restaura US. Una elección manual de US durante esa ventana también puede ser reemplazada: usá Off para desactivar. Otro motor suspende los reintentos. Después de esa ventana no fuerza cambios; si GNOME lo reemplaza más tarde, consultá Estado y usá On.
+- El servicio pertenece a `graphical-session.target`, en lugar de `default.target`. Espera la sesión gráfica, se detiene con ella y se reinicia si pierde IBus. `active` significa proceso iniciado, no selección confirmada.
+- Se conserva el registro dinámico mediante `register_component`: no se instala un XML en el catálogo permanente. Por eso `ibus list-engine --name-only` puede no listar Quick Accent aun cuando funcione. Estado o `python3 ~/.local/share/quick-accent-local/quick_accent.py --diagnose` comprueban el registro activo por separado. No se reinicia el daemon IBus ni se modifican `sources` o `mru-sources`.
+- Instalar/actualizar sí detiene la versión anterior, reemplaza sus archivos y habilita/inicia el servicio. Off deshabilita su autoinicio. Desinstalar retira los archivos administrados tras comprobar la parada; conserva archivos ajenos. Estas acciones solo ocurren al pulsar los botones, no durante las pruebas automatizadas.
 - Si el binario se borra mientras esta ventana está abierta (Desinstalar), la ventana actual seguirá existiendo hasta cerrarla; no habrá un lanzador en el menú.
 
 ### Recuperación manual
@@ -89,6 +107,8 @@ systemctl --user disable --now quick-accent-local.service
 ```
 
 Estos comandos no modifican distribuciones de GNOME ni instalan paquetes.
+
+La revisión técnica, límites y pruebas manuales pendientes están en [docs/v0.4-review.md](docs/v0.4-review.md).
 
 ## Próximo paso: Windows
 

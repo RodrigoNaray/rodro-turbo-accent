@@ -1,9 +1,21 @@
-#![cfg_attr(all(target_os = "windows", not(debug_assertions)), windows_subsystem = "windows")]
+#![cfg_attr(
+    all(target_os = "windows", not(debug_assertions)),
+    windows_subsystem = "windows"
+)]
 //! Quick Accent Local: la ventana es Rust en ambas plataformas.
 //! En Linux reutiliza el motor IBus Python ya probado.
 //! El backend de Windows aún no se ha implementado.
 
 use eframe::egui;
+use std::sync::mpsc::{self, Receiver};
+use std::time::Duration;
+
+struct WorkResult {
+    installed: bool,
+    status: String,
+    message: Option<String>,
+    logs: Option<String>,
+}
 
 #[cfg(target_os = "linux")]
 mod linux;
@@ -16,6 +28,7 @@ struct QuickAccentApp {
     logs: String,
     showing_logs: bool,
     confirm_uninstall: bool,
+    pending: Option<Receiver<WorkResult>>,
 }
 
 impl QuickAccentApp {
@@ -27,55 +40,89 @@ impl QuickAccentApp {
     }
 
     fn refresh_status(&mut self) {
-        #[cfg(target_os = "linux")]
-        {
-            self.installed = linux::is_installed();
-            self.status = match linux::status() {
-                Ok(s) => s,
-                Err(err) => format!("No se pudo comprobar el estado: {err}"),
-            };
-        }
-        #[cfg(not(target_os = "linux"))]
-        {
-            self.installed = false;
-            self.status = "Windows: motor todavía no disponible. La interfaz es multiplataforma, pero falta implementar y validar el adaptador nativo de teclado.".into();
-        }
+        self.start_work("Estado");
     }
 
     fn action(&mut self, label: &str) {
-        #[cfg(target_os = "linux")]
-        let result = match label {
-            "Instalar" => linux::install(),
-            "On" => linux::turn_on(),
-            "Off" => linux::turn_off(),
-            "Desinstalar" => linux::uninstall(),
-            _ => Err("Acción desconocida".into()),
-        };
-        #[cfg(not(target_os = "linux"))]
-        let result: Result<String, String> = Err("El adaptador nativo de Windows está pendiente.".into());
-
-        self.message = match result {
-            Ok(s) => s,
-            Err(e) => format!("Error: {e}"),
-        };
-        self.refresh_status();
+        self.start_work(label);
     }
 
     fn load_logs(&mut self) {
-        #[cfg(target_os = "linux")]
-        {
-            self.logs = linux::logs().unwrap_or_else(|err| format!("Error: {err}"));
+        self.start_work("Logs");
+    }
+
+    fn start_work(&mut self, label: &str) {
+        if self.pending.is_some() {
+            return;
         }
-        #[cfg(not(target_os = "linux"))]
-        {
-            self.logs = "Los registros estarán disponibles cuando exista el motor de Windows.".into();
+        let label = label.to_owned();
+        let (sender, receiver) = mpsc::channel();
+        self.pending = Some(receiver);
+        std::thread::spawn(move || {
+            #[cfg(target_os = "linux")]
+            let result = {
+                let action = match label.as_str() {
+                    "Instalar" => Some(linux::install()),
+                    "On" => Some(linux::turn_on()),
+                    "Off" => Some(linux::turn_off()),
+                    "Desinstalar" => Some(linux::uninstall()),
+                    _ => None,
+                };
+                WorkResult {
+                    installed: linux::is_installed(),
+                    status: linux::status().unwrap_or_else(|e| format!("Error de estado: {e}")),
+                    message: action.map(|r| r.unwrap_or_else(|e| format!("Error: {e}"))),
+                    logs: if label == "Logs" {
+                        Some(linux::logs().unwrap_or_else(|e| format!("Error: {e}")))
+                    } else {
+                        None
+                    },
+                }
+            };
+            #[cfg(not(target_os = "linux"))]
+            let result = WorkResult {
+                installed: false,
+                status: "Windows: adaptador nativo de teclado todavía pendiente.".into(),
+                message: None,
+                logs: None,
+            };
+            let _ = sender.send(result);
+        });
+    }
+
+    fn poll_work(&mut self, ctx: &egui::Context) {
+        if let Some(receiver) = &self.pending {
+            match receiver.try_recv() {
+                Ok(result) => {
+                    self.installed = result.installed;
+                    self.status = result.status;
+                    if let Some(message) = result.message {
+                        self.message = message;
+                    }
+                    if let Some(logs) = result.logs {
+                        self.logs = logs;
+                        self.showing_logs = true;
+                    }
+                    self.pending = None;
+                }
+                Err(mpsc::TryRecvError::Disconnected) => {
+                    self.message = "La operación terminó inesperadamente; consultá Estado antes de reintentar.".into();
+                    self.pending = None;
+                }
+                Err(mpsc::TryRecvError::Empty) => {
+                    ctx.request_repaint_after(Duration::from_millis(100))
+                }
+            }
         }
-        self.showing_logs = true;
     }
 }
 
 impl eframe::App for QuickAccentApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        self.poll_work(ctx);
+        if self.pending.is_some() && ctx.input(|i| i.viewport().close_requested()) {
+            ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
+        }
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.add_space(10.0);
             ui.heading("Quick Accent Local");
@@ -92,7 +139,7 @@ impl eframe::App for QuickAccentApp {
 
             ui.horizontal_wrapped(|ui| {
                 #[cfg(target_os = "linux")]
-                let supported = true;
+                let supported = self.pending.is_none();
                 #[cfg(not(target_os = "linux"))]
                 let supported = false;
 
@@ -106,7 +153,7 @@ impl eframe::App for QuickAccentApp {
                 if ui.add_enabled(supported && self.installed, egui::Button::new("Off")).clicked() {
                     self.action("Off");
                 }
-                if ui.button("Actualizar estado").clicked() {
+                if ui.add_enabled(self.pending.is_none(), egui::Button::new("Actualizar estado")).clicked() {
                     self.refresh_status();
                 }
                 if ui.add_enabled(supported && self.installed, egui::Button::new("Logs")).clicked() {
@@ -116,6 +163,9 @@ impl eframe::App for QuickAccentApp {
                     self.confirm_uninstall = true;
                 }
             });
+            if self.pending.is_some() {
+                ui.label("Operación en curso… Esperando confirmación de IBus/systemd.");
+            }
             if self.confirm_uninstall {
                 ui.add_space(7.0);
                 ui.group(|ui| {
@@ -124,7 +174,7 @@ impl eframe::App for QuickAccentApp {
                         if ui.button("Cancelar").clicked() {
                             self.confirm_uninstall = false;
                         }
-                        if ui.button("Sí, desinstalar").clicked() {
+                        if ui.add_enabled(self.pending.is_none(), egui::Button::new("Sí, desinstalar")).clicked() {
                             self.confirm_uninstall = false;
                             self.action("Desinstalar");
                         }

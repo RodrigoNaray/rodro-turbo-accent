@@ -1,0 +1,15 @@
+# Quick Accent Local: unidad de usuario, no requiere sudo
+[Unit]
+Description=Quick Accent Local - motor IBus de acentos
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 "%h/.local/share/quick-accent-local/quick_accent.py" --auto-activate
+Restart=on-failure
+RestartSec=4
+TimeoutStopSec=12
+
+[Install]
+WantedBy=graphical-session.target

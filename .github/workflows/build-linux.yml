@@ -13,12 +13,20 @@ jobs:
       - name: Dependencias para la ventana (solo en el runner)
         run: |
           sudo apt-get update
-          sudo apt-get install -y pkg-config libx11-dev libxi-dev libxcursor-dev libxrandr-dev libxkbcommon-dev libwayland-dev libgl1-mesa-dev
+          sudo apt-get install -y pkg-config libx11-dev libxi-dev libxcursor-dev libxrandr-dev libxkbcommon-dev libwayland-dev libgl1-mesa-dev ibus dbus-x11 python3-gi gir1.2-ibus-1.0
       - uses: dtolnay/rust-toolchain@stable
       - name: Pruebas Python
-        run: python3 src/assets/quick_accent.py --self-test
+        run: |
+          /usr/bin/python3 src/assets/quick_accent.py --self-test
+          /usr/bin/python3 -m unittest discover -s tests -v
+          /usr/bin/python3 tests/ibus_smoke.py
+      - name: Formato y pruebas Rust
+        run: |
+          cargo fmt --all -- --check
+          cargo test --locked
+          cargo clippy --locked --all-targets -- -D warnings
       - name: Compilar aplicación Rust
-        run: cargo build --release
+        run: cargo build --release --locked
       - name: Empaquetar binario
         run: |
           mkdir -p dist

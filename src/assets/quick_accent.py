@@ -9,6 +9,7 @@ from __future__ import annotations
 import signal
 import sys
 import tempfile
+import time
 from pathlib import Path
 from xml.sax.saxutils import escape
 
@@ -74,6 +75,113 @@ class AccentState:
         return False, actions
 
 
+class Lifecycle:
+    """Una sola operación IBus en vuelo; nunca bloquear el bucle de la fábrica.
+
+    Al parar se espera la respuesta pendiente antes de restaurar US: cancelar
+    un cliente D-Bus no cancela necesariamente la operación en el servidor.
+    """
+
+    def __init__(self, bus, scheduler, quit_loop, clock=time.monotonic):
+        self.bus, self.scheduler = bus, scheduler
+        self.quit_loop, self.clock = quit_loop, clock
+        self.deadline = clock() + 30
+        self.stopping = False
+        self.busy = False
+        self.finished = False
+        self.failed = False
+        self.succeeded = False
+
+    def start(self):
+        self.scheduler.timeout_add_seconds(1, self.tick)
+
+    def stop(self):
+        if not self.stopping:
+            self.stopping = True
+            self.finished = False
+            self.scheduler.timeout_add_seconds(10, self.stop_timeout)
+            self.tick()
+        return False
+
+    def stop_timeout(self):
+        if self.stopping and not self.finished:
+            self.fail_stop("Tiempo agotado restaurando US")
+        return False
+
+    def fail_stop(self, message):
+        print(message, file=sys.stderr, flush=True)
+        self.failed = True
+        self.finished = True
+        self.quit_loop()
+
+    def tick(self):
+        if self.finished:
+            return False
+        if self.busy:
+            return True
+        if not self.stopping and self.clock() >= self.deadline:
+            self.finished = True
+            print("Fin de activación automática; selección confirmada: "
+                  + str(self.succeeded) + ". Consultá Estado para el motor actual.", flush=True)
+            return False
+        self.busy = True
+        self.bus.get_global_engine_async(2000, None, self.queried, None)
+        return True
+
+    def queried(self, bus, result, _data=None):
+        try:
+            desc = bus.get_global_engine_async_finish(result)
+            current = desc.get_name() if desc else ""
+        except Exception as exc:
+            self.busy = False
+            if self.stopping:
+                self.fail_stop(f"No se pudo comprobar el motor al parar: {exc}")
+            else:
+                print(f"Esperando IBus: {exc}", flush=True)
+            return
+        if not self.stopping and self.clock() >= self.deadline:
+            self.finished = True
+            self.busy = False
+            return
+        if self.stopping:
+            if current != ENGINE_NAME:
+                self.finished = True
+                self.busy = False
+                self.quit_loop()
+                return
+            target = "xkb:us::eng"
+        elif current == ENGINE_NAME:
+            if not self.succeeded:
+                print("Activación automática: selección verificada", flush=True)
+            self.succeeded = True
+            self.busy = False
+            return
+        elif current not in ("", "xkb:us::eng"):
+            # No reemplazar otro teclado elegido en la sesión.
+            print("Activación suspendida: hay otro motor seleccionado", flush=True)
+            self.finished = True
+            self.busy = False
+            return
+        else:
+            target = ENGINE_NAME
+        self.bus.set_global_engine_async(target, 2000, None, self.selected, None)
+
+    def selected(self, bus, result, _data=None):
+        try:
+            if not bus.set_global_engine_async_finish(result):
+                raise RuntimeError("IBus rechazó la selección")
+        except Exception as exc:
+            print(f"No se pudo cambiar el motor: {exc}", file=sys.stderr, flush=True)
+            if self.stopping:
+                self.fail_stop("No se confirmó la restauración de US")
+        finally:
+            self.busy = False
+        # Incluso si Stop llegó durante SetGlobalEngine, verificar y restaurar
+        # después de su respuesta, nunca en paralelo con esa selección.
+        if self.stopping and not self.finished:
+            self.tick()
+
+
 def run_ibus():
     import gi
 
@@ -114,6 +222,9 @@ def run_ibus():
         def do_focus_out(self):
             self._actions(self.logic.flush())
 
+        def do_disable(self):
+            self._actions(self.logic.flush())
+
         def do_reset(self):
             self._actions(self.logic.cancel())
 
@@ -131,7 +242,7 @@ def run_ibus():
   <name>{DBUS_NAME}</name>
   <description>Quick Accent Local experimental</description>
   <exec>{escape(sys.executable)} {escape(str(Path(__file__).resolve()))}</exec>
-  <version>0.1</version>
+  <version>0.4.0</version>
   <author>Usuario local</author>
   <license>MIT</license>
   <homepage></homepage>
@@ -144,7 +255,7 @@ def run_ibus():
       <author>Usuario local</author>
       <icon>ibus-keyboard</icon>
       <layout>us</layout>
-      <longname>Quick Accent Local (prueba)</longname>
+      <longname>Quick Accent Local</longname>
       <description>Vocal/N + espacio, manteniendo pulsada la letra</description>
       <rank>1</rank>
     </engine>
@@ -160,26 +271,39 @@ def run_ibus():
 
     print("Motor registrado en IBus: quick-accent-local", flush=True)
 
-    # El modo servicio intenta activar el motor una vez, después de que
-    # GNOME haya tenido tiempo de inicializar su sistema de entrada.
-    # No vuelve a forzar el motor si luego el usuario elige otro teclado.
+    loop = GLib.MainLoop()
+    lifecycle = Lifecycle(bus, GLib, loop.quit)
     if "--auto-activate" in sys.argv[1:]:
-        def activate_once():
-            try:
-                ok = bus.set_global_engine(ENGINE_NAME)
-                print("Activación automática: " + ("OK" if ok else "falló"), flush=True)
-            except Exception as exc:
-                print(f"No se pudo activar automáticamente: {exc}", file=sys.stderr, flush=True)
-            return GLib.SOURCE_REMOVE
-
-        GLib.timeout_add_seconds(4, activate_once)
+        lifecycle.start()
     else:
+        lifecycle.finished = True
         print("Para activar: ibus engine quick-accent-local", flush=True)
 
-    loop = GLib.MainLoop()
-    GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGINT, loop.quit)
-    GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGTERM, loop.quit)
+    GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGINT, lifecycle.stop)
+    GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGTERM, lifecycle.stop)
+    # Tras perder la conexión, salir con error permite que systemd registre
+    # de nuevo el componente cuando IBus esté disponible.
+    disconnected = []
+    def on_disconnect(_bus):
+        disconnected.append(True)
+        loop.quit()
+    bus.connect("disconnected", on_disconnect)
     loop.run()
+    if lifecycle.failed or disconnected:
+        raise RuntimeError("El motor terminó sin una transición IBus confirmada")
+
+
+def diagnose():
+    import gi
+    gi.require_version("IBus", "1.0")
+    from gi.repository import IBus
+    IBus.init()
+    bus = IBus.Bus()
+    if not bus.is_connected():
+        raise RuntimeError("IBus no está conectado")
+    dynamic = any(e.get_name() == ENGINE_NAME for e in bus.list_active_engines())
+    catalog = any(e.get_name() == ENGINE_NAME for e in bus.list_engines())
+    print(f"Registro activo IBus: {dynamic} · Catálogo persistente: {catalog}")
 
 
 if __name__ == "__main__":
@@ -198,8 +322,10 @@ if __name__ == "__main__":
         d.event(ord("a"), 38, 0)
         assert d.event(ord("x"), 53, 0) == (False, [("clear", ""), ("commit", "a")])
         print("Pruebas de lógica: OK")
+    elif sys.argv[1:] == ["--diagnose"]:
+        diagnose()
     elif sys.argv[1:] in ([], ["--auto-activate"]):
         run_ibus()
     else:
-        print("Uso: quick_accent.py [--self-test | --auto-activate]", file=sys.stderr)
+        print("Uso: quick_accent.py [--self-test | --auto-activate | --diagnose]", file=sys.stderr)
         sys.exit(2)
