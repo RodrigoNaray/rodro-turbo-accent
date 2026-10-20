@@ -1,9 +1,9 @@
 [package]
-name = "quick-accent-local-ui"
-version = "0.4.0"
+name = "rodro-turbo-accent"
+version = "0.5.0"
 edition = "2021"
 rust-version = "1.89"
-description = "Interfaz Rust para Quick Accent Local (motor IBus en GNOME/Wayland)"
+description = "Interfaz Rust para Rodro Turbo Accent (motor IBus en GNOME/Wayland)"
 license = "MIT"
 
 [dependencies]

@@ -10,6 +10,7 @@ use std::process::{Command, Output, Stdio};
 use std::thread;
 use std::time::{Duration, Instant};
 
+// Los IDs y el marcador se conservan para actualizar instalaciones 0.4.
 const SERVICE: &str = "quick-accent-local.service";
 const ENGINE: &str = "quick-accent-local";
 const OWNED_MARKER: &str = "Quick Accent Local — archivos de esta aplicación.\n";
@@ -37,10 +38,10 @@ fn desktop_path() -> Result<PathBuf, String> {
 fn read(path: &Path) -> String {
     fs::read_to_string(path).unwrap_or_default()
 }
-fn ensure_project_file(path: &Path, marker: &str) -> Result<(), String> {
-    if path.exists() && !read(path).contains(marker) {
+fn ensure_project_file(path: &Path, markers: &[&str]) -> Result<(), String> {
+    if path.exists() && !markers.iter().any(|marker| read(path).contains(marker)) {
         return Err(format!(
-            "Ya existe un archivo que no parece ser de Quick Accent Local: {}. No lo sobrescribí.",
+            "Ya existe un archivo que no parece ser de Rodro Turbo Accent: {}. No lo sobrescribí.",
             path.display()
         ));
     }
@@ -127,7 +128,7 @@ fn operation_lock() -> Result<File, String> {
         .open(runtime.join("quick-accent-local.lock"))
         .map_err(|e| e.to_string())?;
     file.try_lock()
-        .map_err(|e| format!("Hay otra operación de Quick Accent en curso: {e}"))?;
+        .map_err(|e| format!("Hay otra operación de Rodro Turbo Accent en curso: {e}"))?;
     Ok(file)
 }
 
@@ -245,9 +246,18 @@ pub fn install() -> Result<String, String> {
     let engine_file = app.join("quick_accent.py");
     let marker_file = app.join(".owned-by-quick-accent-local");
 
-    ensure_project_file(&engine_file, "Quick Accent Local:")?;
-    ensure_project_file(&unit, "Description=Quick Accent Local")?;
-    ensure_project_file(&desktop, "X-QuickAccentLocal-Managed=true")?;
+    ensure_project_file(
+        &engine_file,
+        &["Quick Accent Local:", "Rodro Turbo Accent:"],
+    )?;
+    ensure_project_file(
+        &unit,
+        &[
+            "Description=Quick Accent Local",
+            "Description=Rodro Turbo Accent",
+        ],
+    )?;
+    ensure_project_file(&desktop, &["X-QuickAccentLocal-Managed=true"])?;
     if executable.exists() && read(&marker_file) != OWNED_MARKER {
         return Err(format!(
             "Ya existe {} y no hay marca de propiedad del proyecto. No lo sobrescribí.",
@@ -286,7 +296,7 @@ pub fn install() -> Result<String, String> {
         .map_err(|e| e.to_string())?;
 
     let desktop_text = format!(
-        "[Desktop Entry]\nType=Application\nName=Quick Accent Local\nComment=Gestionar acentos con vocal mantenida y espacio\nExec={}\nIcon=preferences-desktop-keyboard-shortcuts\nTerminal=false\nCategories=Utility;Accessibility;\nX-QuickAccentLocal-Managed=true\n",
+        "[Desktop Entry]\nType=Application\nName=Rodro Turbo Accent\nComment=Gestionar acentos con vocal mantenida y espacio\nExec={}\nIcon=preferences-desktop-keyboard-shortcuts\nTerminal=false\nCategories=Utility;Accessibility;\nX-QuickAccentLocal-Managed=true\n",
         desktop_exec_escape(&executable)
     );
     fs::write(&desktop, desktop_text).map_err(|e| e.to_string())?;
@@ -361,9 +371,18 @@ pub fn uninstall() -> Result<String, String> {
     let engine_file = app.join("quick_accent.py");
     let marker_file = app.join(".owned-by-quick-accent-local");
 
-    ensure_project_file(&engine_file, "Quick Accent Local:")?;
-    ensure_project_file(&unit, "Description=Quick Accent Local")?;
-    ensure_project_file(&desktop, "X-QuickAccentLocal-Managed=true")?;
+    ensure_project_file(
+        &engine_file,
+        &["Quick Accent Local:", "Rodro Turbo Accent:"],
+    )?;
+    ensure_project_file(
+        &unit,
+        &[
+            "Description=Quick Accent Local",
+            "Description=Rodro Turbo Accent",
+        ],
+    )?;
+    ensure_project_file(&desktop, &["X-QuickAccentLocal-Managed=true"])?;
     if read(&marker_file) != OWNED_MARKER {
         return Err(
             "Falta la marca de propiedad: no eliminaré archivos que podrían ser de otro proyecto"
@@ -454,6 +473,28 @@ esac
         assert!(unit.contains("WantedBy=graphical-session.target"));
         assert!(unit.contains("PartOf=graphical-session.target"));
         assert!(!unit.contains("WantedBy=default.target"));
+
+        // La nueva marca debe actualizar la instalación 0.4 sin crear otro motor.
+        let engine_file = app_dir().unwrap().join("quick_accent.py");
+        fs::write(
+            &engine_file,
+            read(&engine_file).replace("Rodro Turbo Accent:", "Quick Accent Local:"),
+        )
+        .unwrap();
+        let unit_file = unit_path().unwrap();
+        fs::write(
+            &unit_file,
+            read(&unit_file).replace(
+                "Description=Rodro Turbo Accent",
+                "Description=Quick Accent Local",
+            ),
+        )
+        .unwrap();
+        install().unwrap();
+        assert!(read(&unit_file).contains("Description=Rodro Turbo Accent"));
+        assert!(read(&desktop_path().unwrap()).contains("Name=Rodro Turbo Accent"));
+        assert!(read(&engine_file).contains("Rodro Turbo Accent:"));
+        assert_eq!(engine(), ENGINE);
 
         let lock = operation_lock().unwrap();
         assert!(turn_off().unwrap_err().contains("otra operación"));

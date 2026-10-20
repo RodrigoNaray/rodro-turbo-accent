@@ -2,7 +2,7 @@
     all(target_os = "windows", not(debug_assertions)),
     windows_subsystem = "windows"
 )]
-//! Quick Accent Local: la ventana es Rust en ambas plataformas.
+//! Rodro Turbo Accent: la ventana es Rust en ambas plataformas.
 //! En Linux reutiliza el motor IBus Python ya probado.
 //! El backend de Windows aún no se ha implementado.
 
@@ -46,7 +46,7 @@ struct WorkResult {
 mod linux;
 
 #[derive(Default)]
-struct QuickAccentApp {
+struct RodroTurboAccentApp {
     installed: bool,
     status: String,
     message: String,
@@ -56,7 +56,7 @@ struct QuickAccentApp {
     pending: Option<Receiver<WorkResult>>,
 }
 
-impl QuickAccentApp {
+impl RodroTurboAccentApp {
     fn new(cc: &eframe::CreationContext<'_>) -> Self {
         configure_style(&cc.egui_ctx);
         let mut app = Self::default();
@@ -144,7 +144,7 @@ impl QuickAccentApp {
     fn show_content(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
         ui.style_mut().wrap_mode = Some(egui::TextWrapMode::Wrap);
         ui.add_space(10.0);
-        ui.heading("Quick Accent Local");
+        ui.heading("Rodro Turbo Accent");
         ui.horizontal_wrapped(|ui| {
             ui.label("Mantené una vocal o N durante 250 ms y pulsá Espacio");
             // Dibujar la flecha evita depender de un glifo que puede faltar.
@@ -271,7 +271,7 @@ impl QuickAccentApp {
     }
 }
 
-impl eframe::App for QuickAccentApp {
+impl eframe::App for RodroTurboAccentApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         self.poll_work(ctx);
         if self.pending.is_some() && ctx.input(|i| i.viewport().close_requested()) {
@@ -296,8 +296,8 @@ fn main() -> eframe::Result<()> {
         ..Default::default()
     };
     eframe::run_native(
-        "Quick Accent Local",
+        "Rodro Turbo Accent",
         options,
-        Box::new(|cc| Ok(Box::new(QuickAccentApp::new(cc)))),
+        Box::new(|cc| Ok(Box::new(RodroTurboAccentApp::new(cc)))),
     )
 }

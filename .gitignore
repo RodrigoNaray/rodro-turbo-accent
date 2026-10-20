@@ -5,3 +5,29 @@
 
 __pycache__/
 *.pyc
+
+# Artefactos y respaldos locales
+/dist/
+*.bundle
+*.bak
+/.private/
+/.secrets/
+
+# Credenciales y configuración privada (los ejemplos públicos son explícitos)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+id_rsa
+id_ed25519
+credentials.json
+client_secret*.json
+service-account*.json
+.aws/
+.ssh/
+.netrc
+.npmrc

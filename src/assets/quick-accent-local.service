@@ -1,6 +1,6 @@
-# Quick Accent Local: unidad de usuario, no requiere sudo
+# Rodro Turbo Accent: unidad de usuario, no requiere sudo
 [Unit]
-Description=Quick Accent Local - motor IBus de acentos
+Description=Rodro Turbo Accent - motor IBus de acentos
 After=graphical-session.target
 PartOf=graphical-session.target
 

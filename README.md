@@ -1,130 +1,91 @@
-# Quick Accent Local — GUI Rust + motor IBus (0.4 experimental)
+# Rodro Turbo Accent
 
-App de escritorio con una sola ventana para **Instalar · On · Off · Estado · Logs · Desinstalar**.
+Escribí **á, é, í, ó, ú y ñ** con un teclado US: mantené una vocal o N durante **250 ms** y pulsá Espacio sin soltarla. También funciona con mayúsculas. Si Espacio llega antes, se escriben la letra normal y el espacio.
 
-La ventana se puede redimensionar: los botones se distribuyen según el ancho, mantienen un ancho máximo y el texto usa un tamaño mayor para facilitar la lectura. El texto se ajusta y aparece desplazamiento vertical si falta altura. El área de logs crece al agrandar la ventana. La flecha de la combinación se dibuja como un icono para evitar símbolos faltantes en la fuente.
+Aplicación local para **Linux con GNOME/Wayland e IBus**, inspirada en Quick Accent de PowerToys. Interfaz Rust/egui, motor Python/IBus y servicio `systemd --user`. Proyecto independiente, experimental y con licencia MIT.
 
-**Linux (GNOME/Wayland):** interfaz escrita en Rust usando egui. Conserva el motor IBus/Python probado en Linux Mint. Al instalarlo, copia **solo archivos de tu usuario**, crea un servicio `systemd --user` y añade el lanzador del menú de aplicaciones. No usa `sudo`, no añade grupos y no solicita acceso directo a `/dev/input`.
+## Estado
 
-**Windows:** **todavía no implementado**. La interfaz Rust puede compilarse en Windows, pero los controles no instalan un motor allí. Se necesita un adaptador nativo Win32 que procese de forma segura la combinación letra mantenida + espacio. **No desinstales PowerToys basándote en esta versión**.
+**Versión 0.5.0 experimental.** El usuario confirmó instalación, acentos, inicio automático y On/Off en Linux Mint con GNOME/Wayland y teclado US. La interfaz se adapta al ancho, usa texto de mayor tamaño, limita el ancho de sus botones y permite desplazamiento vertical.
 
-## Función
+Windows, una extensión de GNOME Shell y los paquetes para gestores de software todavía no están implementados. No se anuncia compatibilidad con otros entornos sin probarlos.
 
-- Mantener `a` al menos **250 ms** y pulsar espacio, sin soltar `a` → `á`.
-- Si Espacio llega antes de los 250 ms, se escriben la letra normal y el espacio. Así se evitan acentos por el solapamiento de teclas al separar palabras.
-- `e/i/o/u/n` → `é/í/ó/ú/ñ`; incluye mayúsculas.
-- Pulsar y soltar la letra sin espacio → la letra normal.
-- Mantiene la disposición US; no instala ni cambia la distribución física.
+## Instalar sin Rust ni sudo
 
-El motor genera un carácter *preedit* en IBus y lo confirma o sustituye. Dependemos de que cada aplicación entregue los eventos y de que el motor esté activo. La versión 0.4 cuenta con pruebas automatizadas y con IBus privado. El usuario confirmó instalación, acentos, inicio automático después del arranque, On/Off y la interfaz en su equipo Linux Mint con GNOME/Wayland. Esta validación se limita a ese entorno; se distribuye como **versión experimental**.
+El paquete `rodro-turbo-accent-0.5.0-linux-x86_64.tar.gz` contiene el ejecutable, README, licencia y documentación. El equipo debe tener **IBus, Python 3 con GI y el typelib IBus 1.0, systemd de usuario y una sesión gráfica compatible**.
 
-## Descarga sin instalar Rust en el equipo
+1. Extraé el paquete.
+2. Abrí el ejecutable `rodro-turbo-accent`. Si hace falta, ejecutá `chmod +x rodro-turbo-accent` y después `./rodro-turbo-accent`.
+3. Pulsá **Instalar** o **Actualizar / Reinstalar**.
+4. Usá **On** para habilitar los acentos y su inicio automático, y **Off** para volver al teclado normal y deshabilitar el inicio automático.
 
-Al subir este proyecto a un repositorio privado de GitHub:
+Cerrar la ventana mantiene el servicio activo. Durante una operación la ventana espera a que termine antes de permitir el cierre. **Desinstalar** detiene el servicio y retira los archivos administrados. El instalador no instala paquetes del sistema: comprueba los requisitos antes de copiar archivos.
 
-1. Abre **Actions** → **Compilar Linux** → **Run workflow**.
-2. Al terminar, descarga el artifact `quick-accent-local-linux-x86_64` (GitHub lo entrega comprimido).
-3. Extrae el archivo `.tar.gz` incluido; contiene `quick-accent-local-ui`, este README, `LICENSE` y la carpeta `docs`.
-4. Desde la carpeta donde lo extrajiste, ejecuta:
+Para descargar desde CI: **Actions → Compilar Linux → Run workflow**. El artefacto `rodro-turbo-accent-linux-x86_64` contiene el paquete y su checksum SHA-256. Verificá que corresponda al commit que querés distribuir. No es un lanzamiento auditado ni una versión estable para todas las distribuciones.
 
-   ```bash
-   chmod +x quick-accent-local-ui
-   ./quick-accent-local-ui
-   ```
+## Compatibilidad con instalaciones anteriores
 
-5. Presiona **Instalar**. La app quedará en **Aplicaciones → Quick Accent Local**.
+Rodro Turbo Accent es el nuevo nombre de Quick Accent Local. Se conservan los identificadores de IBus, del servicio y de los archivos instalados para actualizar la versión 0.4 sin crear un segundo motor:
 
-El instalador está **dentro de la ventana**; no tienes que ejecutar scripts descargados de Internet ni usar `sudo`. Para usarlo necesitas IBus y Python GI instalados (en tu Mint ya están).
+- Motor IBus: `quick-accent-local`.
+- Servicio: `quick-accent-local.service`.
+- Ejecutable instalado: `~/.local/bin/quick-accent-local-ui`.
+- Motor y marca de propiedad: `~/.local/share/quick-accent-local/`.
+- Lanzador: `~/.local/share/applications/quick-accent-local.desktop`, visible como **Rodro Turbo Accent**.
+- Unidad: `~/.config/systemd/user/quick-accent-local.service`.
 
-> Los ejecutables compilados por GitHub Actions son artefactos de CI, no lanzamientos auditados. Verifica que el workflow haya compilado el código de tu repositorio y no compartas el artefacto como software validado antes de probarlo.
+El nombre del ejecutable distribuido y del paquete Rust es `rodro-turbo-accent`. El archivo fuente del motor sigue siendo `src/assets/quick_accent.py`. El repositorio y el remoto de GitHub se renombran por separado; cambiar estos archivos no cambia su visibilidad ni publica una release.
 
-## Distribución experimental
+## Privacidad y funcionamiento
 
-Podés compartir el `.tar.gz` con otros usuarios de **Linux x86_64, GNOME/Wayland y teclado US**, indicando que el entorno comprobado es Linux Mint. El ejecutable incluye el instalador: no se necesita Rust para usarlo.
+- No usa sudo, grupos de acceso a teclado ni captura directa de `/dev/input`.
+- El código propio no transmite pulsaciones por red ni las guarda en logs. IBus procesa eventos de escritura: la detección de campos de contraseña es una protección de conveniencia, no una garantía para todas las aplicaciones.
+- Mantiene la distribución US y no modifica `sources` ni `mru-sources` de GNOME.
+- El registro IBus es dinámico. `ibus list-engine` puede no listar el motor aunque funcione; la ventana muestra por separado servicio, selección y registro activo.
+- Durante los primeros 30 segundos puede restaurar Quick Accent si GNOME selecciona US; una selección manual de US en esa ventana también puede ser reemplazada. Usá Off para apagarlo. Otro motor suspende los reintentos; después de esa ventana no fuerza cambios.
+- La actualización requiere que los archivos existentes pasen las comprobaciones de propiedad. La desinstalación conserva archivos ajenos. Los archivos de la carpeta donde descargaste el paquete quedan fuera de ella.
 
-El equipo de destino debe tener **IBus, Python 3 con GI y el typelib IBus 1.0, y systemd de usuario**, además de las bibliotecas gráficas habituales de una sesión GNOME. El instalador comprueba sus requisitos y no instala paquetes del sistema. Windows sigue sin backend implementado.
-
-Conservá `README.md`, `LICENSE` y `docs` junto al ejecutable al redistribuir el paquete. Antes de anunciar compatibilidad con otras distribuciones o versiones, comprobá instalación, escritura, On/Off, reinicio y desinstalación en esos equipos.
-
-## Para desarrolladores
-
-Con la toolchain oficial de Rust y las bibliotecas de compilación requeridas por eframe/egui en Linux:
-
-```bash
-python3 src/assets/quick_accent.py --self-test
-python3 -m unittest discover -s tests -v
-/usr/bin/python3 tests/ibus_smoke.py
-cargo fmt --all -- --check
-cargo test --locked
-cargo clippy --locked --all-targets -- -D warnings
-cargo build --release --locked
-# Abrir la GUI solo cuando se quiera gestionar la instalación real:
-cargo run --release --locked
-```
-
-Para instalar Rust localmente usá [rustup oficial](https://rust-lang.org/tools/install/), con las opciones `--profile minimal --component rustfmt,clippy --no-modify-path`. Instala en `~/.cargo` y `~/.rustup`, sin sudo. Para habilitarlo solo en la terminal actual: `source "$HOME/.cargo/env"`. No hace falta editar `.zshrc`. Se puede retirar con `~/.cargo/bin/rustup self uninstall`.
-
-`cargo test` usa comandos simulados con HOME/runtime temporales: no controla servicios reales. `tests/ibus_smoke.py` levanta un D-Bus y un IBus privados y configura US solo en carpetas temporales; requiere `ibus-daemon`, `dbus-run-session`, Python GI y el typelib IBus. El sandbox puede pedir autorización para crear sockets. No toca la sesión de GNOME ni el servicio instalado.
-
-**No se ejecuta con sudo.** En esta versión el motor se guarda embebido dentro del ejecutable Rust con `include_str!` y se extrae durante la instalación; basta distribuir el binario una vez compilado. Durante el build se requieren librerías nativas de ventanas, pero no hacen falta para usar el binario en una instalación compatible.
-
-## Qué hacen los botones
-
-| Botón | Comportamiento |
-| --- | --- |
-| Instalar | Comprueba IBus/Python, copia el ejecutable y motor, crea lanzador y servicio, y lo activa |
-| On | Habilita/inicia el servicio; espera la selección IBus y la verifica. Reinicia el motor si ya corría sin estar seleccionado |
-| Off | Restaura US si corresponde, coordina la parada, desactiva el autoinicio y verifica la selección después de salir |
-| Actualizar estado | Muestra servicio, autoinicio, motor seleccionado y registro dinámico IBus |
-| Logs | Muestra las últimas líneas de `journalctl --user -u quick-accent-local.service` |
-| Desinstalar | Restaura US (si está activo), deshabilita el servicio, borra únicamente archivos propiedad del proyecto |
-
-**Cerrar la ventana no detiene el motor.** Mientras una operación está pendiente, los controles quedan bloqueados y la ventana espera para cerrarse. Al terminar, cerrar la ventana no afecta al servicio. Dos ventanas no pueden modificar la instalación simultáneamente.
-
-Si lo dejaste en On, se inicia al entrar a tu sesión (no antes de iniciar sesión o al encender físicamente la computadora). Si lo dejaste en Off, permanecerá apagado al volver a entrar.
-
-### Archivos instalados en Linux
-
-- `~/.local/bin/quick-accent-local-ui`
-- `~/.local/share/quick-accent-local/quick_accent.py`
-- `~/.local/share/quick-accent-local/.owned-by-quick-accent-local`
-- `~/.local/share/applications/quick-accent-local.desktop`
-- `~/.config/systemd/user/quick-accent-local.service`
-
-El bloqueo de operaciones usa `$XDG_RUNTIME_DIR/quick-accent-local.lock`: es transitorio, se libera al salir del proceso y el sistema limpia el archivo al finalizar la sesión. No contiene datos de escritura.
-
-No se modifica `~/.zshrc`, GNOME Tweaks, los repositorios APT, los controladores del teclado ni los grupos del usuario. El ZIP/carpeta de proyecto original queda fuera de la desinstalación.
-
-## Seguridad y limitaciones
-
-- El motor IBus procesa eventos de escritura de aplicaciones que usen ese método de entrada. Aunque **no tenga acceso a `/dev/input`**, **no significa que sea incapaz de recibir texto sensible**. El código no escribe contraseñas ni pulsaciones en disco, pero no garantiza detección perfecta de todos los campos de contraseña.
-- No se realizan conexiones de red en el código propio. `cargo` sí descarga dependencias al compilar, y GitHub Actions necesita conexión para el build.
-- Está orientado a **GNOME + Wayland + IBus**. El motor IBus y GNOME pueden competir al restaurar el método de entrada al iniciar sesión. Es importante probar cerrar sesión y entrar de nuevo.
-- No está probado en una gran variedad de programas. Probá en Editor, Firefox y un IDE antes de confiar en él para documentos importantes.
-- El botón **Instalar** reemplaza una instalación previa del mismo proyecto, pero verifica firmas/marcadores de los archivos de texto conocidos y evita sobrescribir rutas inesperadas. No es un sistema de actualizaciones firmado.
-- `--auto-activate` consulta y selecciona IBus de forma asíncrona, con una operación en vuelo y tiempos de espera de dos segundos. Durante los primeros 30 segundos puede volver a seleccionar Quick Accent si GNOME restaura US. Una elección manual de US durante esa ventana también puede ser reemplazada: usá Off para desactivar. Otro motor suspende los reintentos. Después de esa ventana no fuerza cambios; si GNOME lo reemplaza más tarde, consultá Estado y usá On.
-- El servicio pertenece a `graphical-session.target`, en lugar de `default.target`. Espera la sesión gráfica, se detiene con ella y se reinicia si pierde IBus. `active` significa proceso iniciado, no selección confirmada.
-- Se conserva el registro dinámico mediante `register_component`: no se instala un XML en el catálogo permanente. Por eso `ibus list-engine --name-only` puede no listar Quick Accent aun cuando funcione. Estado o `python3 ~/.local/share/quick-accent-local/quick_accent.py --diagnose` comprueban el registro activo por separado. No se reinicia el daemon IBus ni se modifican `sources` o `mru-sources`.
-- Instalar/actualizar sí detiene la versión anterior, reemplaza sus archivos y habilita/inicia el servicio. Off deshabilita su autoinicio. Desinstalar retira los archivos administrados tras comprobar la parada; conserva archivos ajenos. Estas acciones solo ocurren al pulsar los botones, no durante las pruebas automatizadas.
-- Si el binario se borra mientras esta ventana está abierta (Desinstalar), la ventana actual seguirá existiendo hasta cerrarla; no habrá un lanzador en el menú.
+El bloqueo de operaciones utiliza `$XDG_RUNTIME_DIR/quick-accent-local.lock`, sin datos de escritura. El sistema limpia ese directorio al finalizar la sesión.
 
 ### Recuperación manual
-
-Si por cualquier motivo no pudieras usar la ventana:
 
 ```bash
 ibus engine xkb:us::eng
 systemctl --user disable --now quick-accent-local.service
 ```
 
-Estos comandos no modifican distribuciones de GNOME ni instalan paquetes.
+## Desarrollo y comprobaciones
 
-La revisión técnica, los límites y el protocolo de validación en otros equipos están en [docs/v0.4-review.md](docs/v0.4-review.md).
+Rust estable, Python 3 y las bibliotecas necesarias de ventanas. La toolchain puede instalarse por usuario con [rustup](https://rust-lang.org/tools/install/), sin sudo. Si no se modificó el PATH: `source "$HOME/.cargo/env"`.
 
-## Próximo paso: Windows
+```bash
+python3 scripts/check-publication.py
+python3 src/assets/quick_accent.py --self-test
+python3 -m unittest discover -s tests -v
+/usr/bin/python3 tests/ibus_smoke.py
+cargo fmt --all -- --check
+cargo test --locked
+cargo clippy --locked --all-targets -- -D warnings
+python3 scripts/build-release.py
+python3 scripts/package-release.py
+```
 
-Reutilizar la **misma GUI Rust** con un adaptador Win32 para teclado (no IBus). Requiere pruebas de auto-repetición, teclas modificadoras, aplicaciones elevadas, campos de contraseña y teclados distintos. Una captura global de teclado en Windows implica acceso sensible; no debe publicarse como herramienta segura hasta auditarlo y probarlo. La lógica de acentos puede extraerse a un módulo Rust común, pero el backend de cada sistema operativo necesariamente será diferente.
+Las pruebas Rust usan HOME/runtime temporales y comandos de gestión simulados. La prueba IBus crea un D-Bus y un IBus privados; no cambia servicios o ajustes reales. El sandbox puede pedir permiso para crear sockets. Abrir la GUI con `cargo run --release --locked` sí permite gestionar la instalación real mediante sus botones.
+
+Para distribuir, compilá con `scripts/build-release.py`: remapea las rutas personales del compilador. El empaquetado verifica que esas rutas no estén en el binario y elimina nombres de usuario del tar. `dist/` contiene el paquete, su checksum y metadatos públicos del commit; queda fuera de Git. Se necesita Python 3.11 o posterior para el script de empaquetado.
+
+## Publicación, GNOME y apoyo al proyecto
+
+La vía inicial propuesta es una descarga Linux desde GitHub Releases. Una extensión GNOME sería un desarrollo complementario; no se puede subir el ejecutable Rust actual como si fuera una extensión. El análisis y los pasos pendientes están en [distribución](docs/DISTRIBUTION.md).
+
+Las donaciones quedan para una etapa posterior. No hay cuentas, enlaces de cobro, pagos obligatorios ni mecanismos de activación configurados.
+
+- [Preparación del repositorio público](docs/PUBLICATION.md)
+- [Guía para contribuir](CONTRIBUTING.md)
+- [Seguridad y privacidad](SECURITY.md)
+- [Cambios de versión](CHANGELOG.md)
+- [Revisión histórica de la versión 0.4](docs/v0.4-review.md)
 
 ## Licencia
 
-MIT. Ver `LICENSE`.
+MIT. Ver [LICENSE](LICENSE). Conservá la licencia y la documentación al redistribuir el paquete.

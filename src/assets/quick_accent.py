@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Quick Accent Local: motor IBus para acentos con letra mantenida + espacio.
+"""Rodro Turbo Accent: motor IBus para acentos con letra mantenida + espacio.
 
 Instalable por usuario: sin red, sin permisos elevados, sin acceso a /dev/input.
 """
@@ -244,9 +244,9 @@ def run_ibus():
     xml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <component>
   <name>{DBUS_NAME}</name>
-  <description>Quick Accent Local experimental</description>
+  <description>Rodro Turbo Accent experimental</description>
   <exec>{escape(sys.executable)} {escape(str(Path(__file__).resolve()))}</exec>
-  <version>0.4.0</version>
+  <version>0.5.0</version>
   <author>Usuario local</author>
   <license>MIT</license>
   <homepage></homepage>
@@ -259,7 +259,7 @@ def run_ibus():
       <author>Usuario local</author>
       <icon>ibus-keyboard</icon>
       <layout>us</layout>
-      <longname>Quick Accent Local</longname>
+      <longname>Rodro Turbo Accent</longname>
       <description>Vocal/N + espacio, manteniendo pulsada la letra</description>
       <rank>1</rank>
     </engine>
