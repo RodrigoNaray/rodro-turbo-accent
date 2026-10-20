@@ -2,7 +2,7 @@
 
 Escribí **á, é, í, ó, ú y ñ** con un teclado US: mantené una vocal o N durante **250 ms** y pulsá Espacio sin soltarla. También funciona con mayúsculas. Si Espacio llega antes, se escriben la letra normal y el espacio.
 
-Aplicación local para **Linux con GNOME/Wayland e IBus**, inspirada en Quick Accent de PowerToys. Interfaz Rust/egui, motor Python/IBus y servicio `systemd --user`. Proyecto independiente, experimental y con licencia MIT.
+Aplicación local para **Linux con GNOME/Wayland e IBus**, inspirada en Quick Accent de PowerToys. Interfaz Rust/egui, motor Python/IBus y servicio `systemd --user`. Proyecto independiente y experimental.
 
 ## Estado
 
@@ -12,7 +12,7 @@ Windows, una extensión de GNOME Shell y los paquetes para gestores de software 
 
 ## Instalar sin Rust ni sudo
 
-El paquete `rodro-turbo-accent-0.5.0-linux-x86_64.tar.gz` contiene el ejecutable, README, licencia y documentación. El equipo debe tener **IBus, Python 3 con GI y el typelib IBus 1.0, systemd de usuario y una sesión gráfica compatible**.
+El paquete `rodro-turbo-accent-0.5.0-linux-x86_64.tar.gz` contiene el ejecutable, README y documentación. El equipo debe tener **IBus, Python 3 con GI y el typelib IBus 1.0, systemd de usuario y una sesión gráfica compatible**.
 
 1. Extraé el paquete.
 2. Abrí el ejecutable `rodro-turbo-accent`. Si hace falta, ejecutá `chmod +x rodro-turbo-accent` y después `./rodro-turbo-accent`.
@@ -85,7 +85,3 @@ Las donaciones quedan para una etapa posterior. No hay cuentas, enlaces de cobro
 - [Seguridad y privacidad](SECURITY.md)
 - [Cambios de versión](CHANGELOG.md)
 - [Revisión histórica de la versión 0.4](docs/v0.4-review.md)
-
-## Licencia
-
-MIT. Ver [LICENSE](LICENSE). Conservá la licencia y la documentación al redistribuir el paquete.

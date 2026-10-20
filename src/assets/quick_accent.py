@@ -248,14 +248,12 @@ def run_ibus():
   <exec>{escape(sys.executable)} {escape(str(Path(__file__).resolve()))}</exec>
   <version>0.5.0</version>
   <author>Usuario local</author>
-  <license>MIT</license>
   <homepage></homepage>
   <textdomain>quick-accent-local</textdomain>
   <engines>
     <engine>
       <name>{ENGINE_NAME}</name>
       <language>es</language>
-      <license>MIT</license>
       <author>Usuario local</author>
       <icon>ibus-keyboard</icon>
       <layout>us</layout>

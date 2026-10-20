@@ -4,7 +4,7 @@ Revisión de opciones: 20 de octubre de 2026. Estado: preparación local; no se 
 
 ## Primera distribución: aplicación Linux
 
-La arquitectura actual encaja con una descarga nativa para Linux x86_64: GUI Rust, motor Python/IBus y servicio por usuario. El entorno confirmado es Linux Mint con GNOME/Wayland y teclado US. La propuesta inicial es publicar una release experimental con `.tar.gz`, checksum, licencia, documentación y metadatos del commit. Se instala desde la GUI sin sudo; las dependencias del sistema deben estar disponibles.
+La arquitectura actual encaja con una descarga nativa para Linux x86_64: GUI Rust, motor Python/IBus y servicio por usuario. El entorno confirmado es Linux Mint con GNOME/Wayland y teclado US. La propuesta inicial es publicar una release experimental con `.tar.gz`, checksum, documentación y metadatos del commit. Se instala desde la GUI sin sudo; las dependencias del sistema deben estar disponibles.
 
 El siguiente paso de empaquetado puede ser un `.deb` para Mint/Ubuntu, después de definir cómo convivirá la instalación por paquete con la instalación por usuario. No se preparó un `.deb` que ejecute automáticamente cambios de sesión o instale paquetes del sistema. No se anuncia soporte para otras distribuciones sin comprobarlo.
 
@@ -26,7 +26,7 @@ Fuentes oficiales: [permisos de sandbox](https://docs.flatpak.org/en/latest/sand
 
 ## Donaciones (posterior)
 
-La decisión actual es mantener la aplicación disponible bajo MIT y añadir donaciones voluntarias más adelante. No hay enlace activo ni cuenta de cobro configurada.
+La decisión sobre la licencia sigue pendiente. Las donaciones voluntarias también quedan para más adelante; no hay enlace activo ni cuenta de cobro configurada.
 
 Cuando se elija una plataforma y exista una URL real, se puede añadir una sección de apoyo al README y `.github/FUNDING.yml` para mostrar el botón Sponsor. GitHub documenta proveedores admitidos y enlaces personalizados. Una futura extensión también admite metadatos de donaciones, sujetos a sus reglas. No se crean perfiles, cuentas ni promesas de beneficios de pago en esta preparación.
 

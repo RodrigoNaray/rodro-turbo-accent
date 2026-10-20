@@ -4,7 +4,6 @@ version = "0.5.0"
 edition = "2021"
 rust-version = "1.89"
 description = "Interfaz Rust para Rodro Turbo Accent (motor IBus en GNOME/Wayland)"
-license = "MIT"
 
 [dependencies]
 eframe = { version = "0.31.1", default-features = false, features = ["default_fonts", "glow", "x11", "wayland"] }

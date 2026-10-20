@@ -47,7 +47,7 @@ def main():
         info.pax_headers = {}
         return info
 
-    files = {"rodro-turbo-accent": binary, "README.md": ROOT / "README.md", "LICENSE": ROOT / "LICENSE"}
+    files = {"rodro-turbo-accent": binary, "README.md": ROOT / "README.md"}
     files.update({str(path.relative_to(ROOT)): path for path in sorted((ROOT / "docs").rglob("*.md"))})
     with destination.open("wb") as output:
         with gzip.GzipFile(filename="", fileobj=output, mode="wb", mtime=0) as compressed:
