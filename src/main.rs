@@ -1,3 +1,6 @@
+// Copyright © 2026 Rodrigo Naray
+// SPDX-License-Identifier: GPL-3.0-only
+
 #![cfg_attr(
     all(target_os = "windows", not(debug_assertions)),
     windows_subsystem = "windows"

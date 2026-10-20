@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Copyright © 2026 Rodrigo Naray
+# SPDX-License-Identifier: GPL-3.0-only
+
 """Comprobación local básica de privacidad: autoría, archivos y patrones de secretos.
 
 No imprime valores detectados. Revisa HEAD y sus ancestros; no publica ni cambia Git.

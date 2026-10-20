@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Copyright © 2026 Rodrigo Naray
+# SPDX-License-Identifier: GPL-3.0-only
+
 """Compila sin incluir rutas privadas del equipo en los diagnósticos del binario."""
 import argparse
 import os

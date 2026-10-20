@@ -1,3 +1,6 @@
+# Copyright © 2026 Rodrigo Naray
+# SPDX-License-Identifier: GPL-3.0-only
+
 """La protección de publicación se comprueba en un repositorio Git temporal."""
 import os
 from pathlib import Path

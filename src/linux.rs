@@ -1,3 +1,6 @@
+// Copyright © 2026 Rodrigo Naray
+// SPDX-License-Identifier: GPL-3.0-only
+
 //! Integración con GNOME/Wayland: usa IBus y systemd de *usuario*.
 //! No usa sudo, no toca /usr, no modifica permisos de /dev/input.
 

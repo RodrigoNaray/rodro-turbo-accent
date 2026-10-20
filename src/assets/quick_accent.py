@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Copyright © 2026 Rodrigo Naray
+# SPDX-License-Identifier: GPL-3.0-only
+
 """Rodro Turbo Accent: motor IBus para acentos con letra mantenida + espacio.
 
 Instalable por usuario: sin red, sin permisos elevados, sin acceso a /dev/input.
@@ -248,12 +251,14 @@ def run_ibus():
   <exec>{escape(sys.executable)} {escape(str(Path(__file__).resolve()))}</exec>
   <version>0.5.0</version>
   <author>Usuario local</author>
+  <license>GPL-3.0-only</license>
   <homepage></homepage>
   <textdomain>quick-accent-local</textdomain>
   <engines>
     <engine>
       <name>{ENGINE_NAME}</name>
       <language>es</language>
+      <license>GPL-3.0-only</license>
       <author>Usuario local</author>
       <icon>ibus-keyboard</icon>
       <layout>us</layout>

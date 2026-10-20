@@ -3,7 +3,11 @@ name = "rodro-turbo-accent"
 version = "0.5.0"
 edition = "2021"
 rust-version = "1.89"
-description = "Interfaz Rust para Rodro Turbo Accent (motor IBus en GNOME/Wayland)"
+description = "Type accented characters with a US keyboard on Linux using a Rust GUI and an IBus engine"
+license = "GPL-3.0-only"
+authors = ["Rodrigo Naray"]
+repository = "https://github.com/RodrigoNaray/rodro-turbo-accent"
+readme = "README.md"
 
 [dependencies]
 eframe = { version = "0.31.1", default-features = false, features = ["default_fonts", "glow", "x11", "wayland"] }

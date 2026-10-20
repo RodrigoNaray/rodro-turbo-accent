@@ -1,3 +1,6 @@
+# Copyright © 2026 Rodrigo Naray
+# SPDX-License-Identifier: GPL-3.0-only
+
 """No importa GI ni accede a una sesión real."""
 import importlib.util
 from pathlib import Path

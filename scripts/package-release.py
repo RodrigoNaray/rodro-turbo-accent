@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Copyright © 2026 Rodrigo Naray
+# SPDX-License-Identifier: GPL-3.0-only
+
 """Empaqueta la versión Linux x86_64 sin nombres de usuario ni rutas de la máquina."""
 import gzip
 import hashlib
@@ -30,6 +33,8 @@ def main():
     metadata = json.dumps({
         "name": "Rodro Turbo Accent",
         "version": version,
+        "license": "GPL-3.0-only",
+        "copyright": "Copyright © 2026 Rodrigo Naray",
         "source_commit": git("rev-parse", "HEAD"),
         "uncommitted_changes": bool(git("status", "--porcelain")),
         "platform": "linux-x86_64",
@@ -47,7 +52,13 @@ def main():
         info.pax_headers = {}
         return info
 
-    files = {"rodro-turbo-accent": binary, "README.md": ROOT / "README.md"}
+    files = {"rodro-turbo-accent": binary}
+    for name in (
+        "README.md", "README.es.md", "LICENSE", "COPYRIGHT",
+        "THIRD_PARTY_NOTICES.md", "THIRD_PARTY_LICENSES.txt",
+        "CONTRIBUTING.md", "SECURITY.md", "CHANGELOG.md",
+    ):
+        files[name] = ROOT / name
     files.update({str(path.relative_to(ROOT)): path for path in sorted((ROOT / "docs").rglob("*.md"))})
     with destination.open("wb") as output:
         with gzip.GzipFile(filename="", fileobj=output, mode="wb", mtime=0) as compressed:

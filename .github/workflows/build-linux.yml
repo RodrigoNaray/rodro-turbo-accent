@@ -23,6 +23,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y pkg-config libx11-dev libxi-dev libxcursor-dev libxrandr-dev libxkbcommon-dev libwayland-dev libgl1-mesa-dev ibus dbus-x11 python3-gi gir1.2-ibus-1.0
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
       - name: Pruebas Python
         run: |
           /usr/bin/python3 src/assets/quick_accent.py --self-test

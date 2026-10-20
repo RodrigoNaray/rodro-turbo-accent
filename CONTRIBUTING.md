@@ -1,11 +1,33 @@
-# Contribuir a Rodro Turbo Accent
+# Contributing to Rodro Turbo Accent
 
-Describí el problema y el comportamiento esperado antes de cambiar el motor de entrada. Incluí entorno gráfico, versión de GNOME, distribución y versión de la aplicación. Evitá adjuntar texto escrito, datos personales o logs sin revisar.
+Copyright © 2026 Rodrigo Naray. SPDX-License-Identifier: GPL-3.0-only.
 
-Usá un correo noreply de GitHub para los commits. Podés configurar el del repositorio con `git config --local user.email DIRECCION_NOREPLY`. El chequeo de publicación exige direcciones noreply en los commits de la revisión que se publique.
+This is a functional, experimental personal MVP. Read [README.md](README.md) or [README.es.md](README.es.md) for its supported behavior and known limitations.
 
-Mantené la separación entre GUI Rust y backend Linux. Los identificadores `quick-accent-local` se conservan por compatibilidad; no deben renombrarse sin una migración probada. Windows necesita un backend propio.
+## Report a bug or propose a change
 
-Antes de proponer cambios, ejecutá formato, pruebas y Clippy según README. Las pruebas automatizadas no deben gestionar los servicios reales de la sesión. Cualquier prueba de instalación, cambio de motor o ajustes de GNOME debe explicar sus efectos antes de ejecutarse.
+Open an [issue](https://github.com/RodrigoNaray/rodro-turbo-accent/issues) with the application version, distribution, GNOME version/session type, US layout details, reproduction steps, expected result and actual result. Include reviewed logs only when useful; do not attach private text, credentials or personal filesystem paths. For security issues follow [SECURITY.md](SECURITY.md).
 
-No agregues credenciales, archivos `.env`, certificados privados, respaldos Git ni ejecutables locales al historial. Para distribuir binarios, usá los scripts de compilación y empaquetado que remapean rutas y normalizan el tar.
+Discuss changes affecting input behavior before implementing them. Keep pull requests focused and explain what changed, why and how it was verified. Do not announce unsupported platforms or unmeasured performance.
+
+## Development checks
+
+Follow the build and test commands in the README. Rust tests use temporary HOME/runtime directories and mocked commands. The IBus smoke test uses a private D-Bus/IBus. Automated tests must not operate on the real desktop's services or GNOME configuration. Explain the effects and obtain consent before a manual installation or input-engine test.
+
+Preserve the separation between Rust GUI and Linux backend. Internal `quick-accent-local` identifiers exist for upgrade compatibility; changing them requires an independently designed and tested migration. A Windows backend is not implemented.
+
+Keep README.md and README.es.md equivalent when updating behavior or instructions. Dependency or embedded-resource changes also require refreshing the license review and third-party notices.
+
+## Privacy and licensing
+
+Use a GitHub noreply address for commits if you do not want to expose your email. This repository's publication check currently accepts only GitHub noreply author/committer identities in HEAD and its ancestors, so configure it before opening a pull request:
+
+```bash
+git config --local user.email 103074621+RodrigoNaray@users.noreply.github.com
+```
+
+That privacy check is a repository contribution process, not an extra condition on use, modification or redistribution of the GPL software.
+
+Original contributions are supplied under GPL-3.0-only, the project's existing license. Retain existing third-party copyrights and license notices. Do not add code/resources whose terms conflict with the project; explain provenance and licensing of any material you introduce. There is no CLA, payment requirement or additional usage restriction.
+
+Do not commit private `.env` files, keys, Git backups, local executables or build artifacts. Keep Cargo.lock in version control. Release builds should use the existing path-remapping and packaging scripts; binary distribution additionally needs the Corresponding Source described in [docs/LICENSING.md](docs/LICENSING.md).

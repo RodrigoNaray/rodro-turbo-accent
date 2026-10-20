@@ -1,62 +1,88 @@
 # Rodro Turbo Accent
 
-Escribí **á, é, í, ó, ú y ñ** con un teclado US: mantené una vocal o N durante **250 ms** y pulsá Espacio sin soltarla. También funciona con mayúsculas. Si Espacio llega antes, se escriben la letra normal y el espacio.
+**English** | [Español](README.es.md)
 
-Aplicación local para **Linux con GNOME/Wayland e IBus**, inspirada en Quick Accent de PowerToys. Interfaz Rust/egui, motor Python/IBus y servicio `systemd --user`. Proyecto independiente y experimental.
+A Linux tool for typing **á, é, í, ó, ú and ñ** while keeping a US keyboard layout. Built with a Rust desktop interface and a Python IBus engine.
 
-## Estado
+Hold a vowel or **N** for at least **250 ms**, then press **Space** without releasing the letter. Uppercase letters work too. For example, holding `a` and pressing Space produces `á`. Pressing Space earlier keeps the plain letter and the space.
 
-**Versión 0.5.0 experimental.** El usuario confirmó instalación, acentos, inicio automático y On/Off en Linux Mint con GNOME/Wayland y teclado US. La interfaz se adapta al ancho, usa texto de mayor tamaño, limita el ancho de sus botones y permite desplazamiento vertical.
+## Motivation and status
 
-Windows, una extensión de GNOME Shell y los paquetes para gestores de software todavía no están implementados. No se anuncia compatibilidad con otros entornos sin probarlos.
+A US keyboard is convenient for programming, but writing Spanish requires characters it does not provide directly. This personal project explores an interaction inspired by Microsoft PowerToys Quick Accent, using IBus on Linux with GNOME/Wayland, without switching the keyboard layout or reading raw input devices. It is independent and unaffiliated with Microsoft or PowerToys.
 
-## Instalar sin Rust ni sudo
+**Version 0.5.0 — functional MVP, experimental personal project under development.** The author has confirmed installation, accented input, startup activation and On/Off on Linux Mint with GNOME/Wayland and a US layout. This is not a general stability or compatibility guarantee.
 
-El paquete `rodro-turbo-accent-0.5.0-linux-x86_64.tar.gz` contiene el ejecutable, README y documentación. El equipo debe tener **IBus, Python 3 con GI y el typelib IBus 1.0, systemd de usuario y una sesión gráfica compatible**.
+## Current features
 
-1. Extraé el paquete.
-2. Abrí el ejecutable `rodro-turbo-accent`. Si hace falta, ejecutá `chmod +x rodro-turbo-accent` y después `./rodro-turbo-accent`.
-3. Pulsá **Instalar** o **Actualizar / Reinstalar**.
-4. Usá **On** para habilitar los acentos y su inicio automático, y **Off** para volver al teclado normal y deshabilitar el inicio automático.
+- Lowercase and uppercase accented vowels and `ñ` / `Ñ`.
+- Fixed 250 ms hold threshold to reduce accidental accents between words.
+- Resizable, scrollable GUI: installation, On, Off, status, logs and confirmed uninstallation.
+- Per-user installation and startup through `systemd --user`. Closing the window keeps the engine running.
+- Asynchronous IBus activation, bounded startup retries and coordinated shutdown.
+- Ownership checks when updating or removing installed files.
 
-Cerrar la ventana mantiene el servicio activo. Durante una operación la ventana espera a que termine antes de permitir el cierre. **Desinstalar** detiene el servicio y retira los archivos administrados. El instalador no instala paquetes del sistema: comprueba los requisitos antes de copiar archivos.
+The GUI is currently in Spanish. Only the README is bilingual.
 
-Para descargar desde CI: **Actions → Compilar Linux → Run workflow**. El artefacto `rodro-turbo-accent-linux-x86_64` contiene el paquete y su checksum SHA-256. Verificá que corresponda al commit que querés distribuir. No es un lanzamiento auditado ni una versión estable para todas las distribuciones.
+## Technologies and requirements
 
-## Compatibilidad con instalaciones anteriores
+| Component | Technology / requirement |
+| --- | --- |
+| Desktop interface | Rust, eframe/egui 0.31.1, OpenGL renderer |
+| Input engine | Python 3, PyGObject (`gi`), IBus 1.0 introspection |
+| Session | IBus, D-Bus, `systemd --user`, `journalctl`, `XDG_RUNTIME_DIR` |
+| Confirmed desktop | Linux Mint, GNOME on Wayland, US keyboard layout |
+| Build | Rust 1.89+, Cargo, C toolchain, pkg-config, windowing/OpenGL development libraries |
+| Release scripts | Python 3.11+; Linux x86_64 packaging |
 
-Rodro Turbo Accent es el nuevo nombre de Quick Accent Local. Se conservan los identificadores de IBus, del servicio y de los archivos instalados para actualizar la versión 0.4 sin crear un segundo motor:
+The application checks system requirements but does not install system packages. It requires no sudo, membership in the `input` group or direct access to `/dev/input`. A working IBus connection and a systemd user manager must already be available in the graphical session.
 
-- Motor IBus: `quick-accent-local`.
-- Servicio: `quick-accent-local.service`.
-- Ejecutable instalado: `~/.local/bin/quick-accent-local-ui`.
-- Motor y marca de propiedad: `~/.local/share/quick-accent-local/`.
-- Lanzador: `~/.local/share/applications/quick-accent-local.desktop`, visible como **Rodro Turbo Accent**.
-- Unidad: `~/.config/systemd/user/quick-accent-local.service`.
+CI builds on Ubuntu 24.04 x86_64; compilation is not evidence of desktop behavior on every Ubuntu installation. Windows, macOS, other desktops and other architectures have not been validated. This repository contains no GNOME Shell extension, Flatpak or `.deb` package.
 
-El nombre del ejecutable distribuido y del paquete Rust es `rodro-turbo-accent`. El archivo fuente del motor sigue siendo `src/assets/quick_accent.py`. El repositorio y el remoto de GitHub se renombran por separado; cambiar estos archivos no cambia su visibilidad ni publica una release.
+## Build and run
 
-## Privacidad y funcionamiento
+Install Rust through [rustup](https://rust-lang.org/tools/install/) if needed. On Mint/Ubuntu, the CI dependency list is a reference: `build-essential`, `pkg-config`, `libx11-dev`, `libxi-dev`, `libxcursor-dev`, `libxrandr-dev`, `libxkbcommon-dev`, `libwayland-dev`, `libgl1-mesa-dev`, `ibus`, `dbus-x11`, `python3-gi` and `gir1.2-ibus-1.0`. System package installation is managed separately by the administrator.
 
-- No usa sudo, grupos de acceso a teclado ni captura directa de `/dev/input`.
-- El código propio no transmite pulsaciones por red ni las guarda en logs. IBus procesa eventos de escritura: la detección de campos de contraseña es una protección de conveniencia, no una garantía para todas las aplicaciones.
-- Mantiene la distribución US y no modifica `sources` ni `mru-sources` de GNOME.
-- El registro IBus es dinámico. `ibus list-engine` puede no listar el motor aunque funcione; la ventana muestra por separado servicio, selección y registro activo.
-- Durante los primeros 30 segundos puede restaurar Quick Accent si GNOME selecciona US; una selección manual de US en esa ventana también puede ser reemplazada. Usá Off para apagarlo. Otro motor suspende los reintentos; después de esa ventana no fuerza cambios.
-- La actualización requiere que los archivos existentes pasen las comprobaciones de propiedad. La desinstalación conserva archivos ajenos. Los archivos de la carpeta donde descargaste el paquete quedan fuera de ella.
+```bash
+git clone https://github.com/RodrigoNaray/rodro-turbo-accent.git
+cd rodro-turbo-accent
+python3 scripts/build-release.py
+./target/release/rodro-turbo-accent
+```
 
-El bloqueo de operaciones utiliza `$XDG_RUNTIME_DIR/quick-accent-local.lock`, sin datos de escritura. El sistema limpia ese directorio al finalizar la sesión.
+Use `source "$HOME/.cargo/env"` if Cargo is not on your PATH. The build script also checks `~/.cargo/bin/cargo`. It accepts `--offline` when the locked dependencies are cached. For a development build, use `cargo run --locked`.
 
-### Recuperación manual
+Opening the GUI displays status. Its management buttons modify the real per-user installation and service; running the GUI is not an isolated test.
+
+## Install and use
+
+1. Build and open the application. Alternatively, extract a CI artifact from **Actions → Compilar Linux**, verify its SHA-256 checksum and run `./rodro-turbo-accent`. Check that the artifact matches the intended source revision. Rust is not required to use a built binary.
+2. Click **Instalar** (Install). It copies the executable, engine, launcher and user service, then enables and starts the engine. **Actualizar / Reinstalar** updates an existing installation.
+3. **On** enables accented input and automatic startup. **Off** stops it and disables startup. Off restores US when this engine is selected; another selected engine is preserved.
+4. Hold a supported letter for at least 250 ms and press Space. Release the letter before typing the next one. Space is consumed to produce the accent; press Space again if you need a word separator.
+5. **Actualizar estado** refreshes service/IBus status. **Logs** shows the last 80 journal entries for the service. **Desinstalar** asks for confirmation, stops the service and removes application-owned files.
+
+Closing the window leaves the service active. The GUI waits for a pending management operation before closing. Uninstallation does not remove your checkout, downloaded archive, extracted package or unrelated files.
+
+The internal engine ID and service remain `quick-accent-local` for compatibility with the former name. Installation uses `~/.local/share/quick-accent-local/`, `~/.local/bin/quick-accent-local-ui`, `~/.config/systemd/user/quick-accent-local.service` and `~/.local/share/applications/quick-accent-local.desktop`.
+
+## Known limitations and recovery
+
+- The hold threshold is fixed, with no settings screen. Holding a supported letter suppresses its normal autorepeat.
+- Input depends on IBus integration in the target application. Password/PIN detection relies on applications reporting their content type; it is not a guarantee for every sensitive field.
+- For 30 seconds after engine startup, activation can replace US if GNOME selects it. Manually choosing US during that window can also be overridden; use **Off** to disable the engine. Another selected engine suspends retries.
+- Registration is dynamic: `ibus list-engine` may omit `quick-accent-local` even while it works. Status distinguishes active registration from the persistent catalog.
+- On can wait up to 35 seconds for selection confirmation. A running service alone does not prove accented input is active.
+
+Project code does not transmit keystrokes over the network or log typed text. It keeps the US layout and does not edit GNOME's `sources` or `mru-sources`. See [security and privacy](SECURITY.md).
+
+If needed, these recovery commands select US and disable the service:
 
 ```bash
 ibus engine xkb:us::eng
 systemctl --user disable --now quick-accent-local.service
 ```
 
-## Desarrollo y comprobaciones
-
-Rust estable, Python 3 y las bibliotecas necesarias de ventanas. La toolchain puede instalarse por usuario con [rustup](https://rust-lang.org/tools/install/), sin sudo. Si no se modificó el PATH: `source "$HOME/.cargo/env"`.
+## Tests and structure
 
 ```bash
 python3 scripts/check-publication.py
@@ -66,22 +92,32 @@ python3 -m unittest discover -s tests -v
 cargo fmt --all -- --check
 cargo test --locked
 cargo clippy --locked --all-targets -- -D warnings
-python3 scripts/build-release.py
-python3 scripts/package-release.py
 ```
 
-Las pruebas Rust usan HOME/runtime temporales y comandos de gestión simulados. La prueba IBus crea un D-Bus y un IBus privados; no cambia servicios o ajustes reales. El sandbox puede pedir permiso para crear sockets. Abrir la GUI con `cargo run --release --locked` sí permite gestionar la instalación real mediante sus botones.
+Rust tests use temporary HOME/runtime directories and mocked management commands. The IBus smoke test uses a private D-Bus and IBus with temporary directories; it does not change the real GNOME configuration or systemd service. It requires the system Python interpreter with GI and permission to create local sockets.
 
-Para distribuir, compilá con `scripts/build-release.py`: remapea las rutas personales del compilador. El empaquetado verifica que esas rutas no estén en el binario y elimina nombres de usuario del tar. `dist/` contiene el paquete, su checksum y metadatos públicos del commit; queda fuera de Git. Se necesita Python 3.11 o posterior para el script de empaquetado.
+| Path | Purpose |
+| --- | --- |
+| `src/main.rs` | GUI and background management tasks |
+| `src/linux.rs` | Linux installation, service and IBus controls |
+| `src/assets/` | Embedded Python engine and systemd user unit |
+| `tests/` | Python unit tests and isolated IBus integration |
+| `scripts/` | Privacy checks, release build and packaging |
+| `.github/workflows/` | Linux build and test workflow |
+| `docs/` | Publication, licensing and historical review |
 
-## Publicación, GNOME y apoyo al proyecto
+After the release build, `python3 scripts/package-release.py` writes an ignored archive and checksum in `dist/`. Build with `scripts/build-release.py` first: it remaps personal compiler paths, while packaging verifies the binary and normalizes archive ownership. Package metadata records the commit and uncommitted state. Review [distribution obligations](docs/LICENSING.md) before sharing binaries.
 
-La vía inicial propuesta es una descarga Linux desde GitHub Releases. Una extensión GNOME sería un desarrollo complementario; no se puede subir el ejecutable Rust actual como si fuera una extensión. El análisis y los pasos pendientes están en [distribución](docs/DISTRIBUTION.md).
+## Bugs and contributions
 
-Las donaciones quedan para una etapa posterior. No hay cuentas, enlaces de cobro, pagos obligatorios ni mecanismos de activación configurados.
+Use [GitHub Issues](https://github.com/RodrigoNaray/rodro-turbo-accent/issues) for reproducible bugs or suggestions. Include version, distribution, GNOME/session details, layout, reproduction steps, expected and actual behavior. Review logs before attaching them. Follow [SECURITY.md](SECURITY.md) for security issues.
 
-- [Preparación del repositorio público](docs/PUBLICATION.md)
-- [Guía para contribuir](CONTRIBUTING.md)
-- [Seguridad y privacidad](SECURITY.md)
-- [Cambios de versión](CHANGELOG.md)
-- [Revisión histórica de la versión 0.4](docs/v0.4-review.md)
+Contributions are welcome: discuss changes in an issue, keep pull requests focused and run the checks above. Read [CONTRIBUTING.md](CONTRIBUTING.md); preserve the working engine and legacy installation identifiers.
+
+## License, author and optional support
+
+Copyright © 2026 Rodrigo Naray.
+
+Original project code is licensed under **GNU GPL version 3 only (`GPL-3.0-only`)**, without an “or later” option. [LICENSE](LICENSE) contains the complete, unmodified text. Third-party dependencies and fonts retain their own licenses and copyrights; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and the [licensing review](docs/LICENSING.md).
+
+Further reading: [publication checklist](docs/PUBLICATION.md), [distribution](docs/DISTRIBUTION.md), [changelog](CHANGELOG.md), [historical 0.4 review](docs/v0.4-review.md). Supporting documents are in English or Spanish as indicated by their content.

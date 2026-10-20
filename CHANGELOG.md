@@ -2,6 +2,8 @@
 
 ## 0.5.0 — Preparación para publicación
 
+- Licencia GPL-3.0-only para el código original; avisos de terceros conservados.
+- README equivalentes en inglés y español, requisitos y limitaciones del MVP.
 - Nuevo nombre público: **Rodro Turbo Accent**.
 - Ejecutable y paquete Rust: `rodro-turbo-accent`.
 - Se conservan los IDs de IBus/systemd y las rutas instaladas para actualizar Quick Accent Local 0.4 sin duplicar el motor.

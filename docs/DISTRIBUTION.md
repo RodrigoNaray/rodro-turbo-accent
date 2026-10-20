@@ -1,33 +1,32 @@
 # Distribución de Rodro Turbo Accent
 
-Revisión de opciones: 20 de octubre de 2026. Estado: preparación local; no se publicó un repositorio, paquete de tienda ni extensión.
+Copyright © 2026 Rodrigo Naray. SPDX-License-Identifier: GPL-3.0-only.
 
-## Primera distribución: aplicación Linux
+## Formato disponible
 
-La arquitectura actual encaja con una descarga nativa para Linux x86_64: GUI Rust, motor Python/IBus y servicio por usuario. El entorno confirmado es Linux Mint con GNOME/Wayland y teclado US. La propuesta inicial es publicar una release experimental con `.tar.gz`, checksum, documentación y metadatos del commit. Se instala desde la GUI sin sudo; las dependencias del sistema deben estar disponibles.
+El repositorio contiene un MVP funcional con GUI Rust, motor Python/IBus y servicio systemd de usuario. El entorno de uso confirmado es Linux Mint con GNOME/Wayland y teclado US. El empaquetado existente produce un archivo Linux x86_64; no hay instaladores .deb, Flatpak ni extensión GNOME Shell.
 
-El siguiente paso de empaquetado puede ser un `.deb` para Mint/Ubuntu, después de definir cómo convivirá la instalación por paquete con la instalación por usuario. No se preparó un `.deb` que ejecute automáticamente cambios de sesión o instale paquetes del sistema. No se anuncia soporte para otras distribuciones sin comprobarlo.
+La instalación se realiza desde la GUI por usuario, sin sudo. Las dependencias del sistema deben estar disponibles previamente. La interfaz permite actualizar o desinstalar los archivos administrados; conserva identificadores del antiguo Quick Accent Local por compatibilidad.
 
-## GNOME Shell Extensions
+## Compilación y paquete local
 
-El catálogo de GNOME distribuye extensiones con `extension.js` y `metadata.json`. Su revisión exige código JavaScript legible; prohíbe incluir ejecutables binarios y limita el uso de scripts externos. Por eso la aplicación Rust/Python actual no es directamente un ZIP publicable en extensions.gnome.org.
+```bash
+python3 scripts/build-release.py
+python3 scripts/package-release.py
+```
 
-Una extensión complementaria podría ofrecer estado y controles de panel, comunicándose de forma asíncrona con el backend instalado aparte. Requiere diseñar la interfaz de control, probar versiones reales de GNOME y limpiar señales/temporizadores en `disable()`. No debe prometer compatibilidad con versiones futuras. La aceptación depende de la revisión de GNOME, no de esta planificación.
+El primer script compila con Cargo.lock y remapea las rutas personales del compilador. El segundo comprueba el formato ELF x86_64 y la ausencia de las rutas actuales del usuario/repositorio, normaliza los propietarios/permisos del tar y genera un checksum SHA-256. No instala ni publica el resultado.
 
-Fuentes oficiales: [estructura de una extensión](https://gjs.guide/extensions/overview/anatomy.html), [reglas de revisión](https://gjs.guide/extensions/review-guidelines/review-guidelines.html).
+El archivo en `dist/` contiene el ejecutable, ambos README, GPL v3 íntegra, copyright, avisos de terceros, documentación y `BUILD-INFO.json`. Los metadatos identifican el commit y si había cambios sin confirmar. Un paquete generado durante esta preparación se marca como no confirmado; no debe presentarse como una release del commit anterior.
 
-## Flatpak y Flathub
+## GitHub Actions
 
-Flatpak limita por defecto el acceso al sistema de archivos y al D-Bus del host. Esta aplicación copia un motor y una unidad systemd a la cuenta del usuario, de modo que no basta con envolver el instalador actual en un Flatpak.
+Se conserva **Compilar Linux**, que usa Ubuntu 24.04, ejecuta privacidad, pruebas Python/IBus, formato, pruebas Rust y Clippy, y genera un artefacto con el paquete y su checksum. El workflow tiene permisos de lectura y no persiste credenciales de checkout. Rustfmt y Clippy se solicitan explícitamente en la toolchain.
 
-La evaluación propuesta es separar backend del host y GUI antes de diseñar un manifiesto con permisos mínimos. No hay manifiesto Flatpak ni aprobación de Flathub. Evitar dar acceso global al host para forzar el instalador actual.
+La compilación de CI no reemplaza probar la instalación en una sesión gráfica compatible. Un artefacto de compilación no significa que exista una versión estable ni una release publicada. Antes de cambiar la visibilidad, revisá también artefactos antiguos del servidor.
 
-Fuentes oficiales: [permisos de sandbox](https://docs.flatpak.org/en/latest/sandbox-permissions.html), [envío de aplicaciones a Flathub](https://docs.flathub.org/docs/for-app-authors/submission).
+## Antes de compartir binarios
 
-## Donaciones (posterior)
+Se debe ofrecer el código fuente correspondiente mediante un método permitido por GPLv3, incluyendo las dependencias requeridas y los scripts de compilación/instalación. El paquete actual no genera un archivo con dependencias vendorizadas. Tampoco instala por separado una carpeta de avisos legales. Consultá [LICENSING.md](LICENSING.md) y conservá todos los avisos del paquete.
 
-La decisión sobre la licencia sigue pendiente. Las donaciones voluntarias también quedan para más adelante; no hay enlace activo ni cuenta de cobro configurada.
-
-Cuando se elija una plataforma y exista una URL real, se puede añadir una sección de apoyo al README y `.github/FUNDING.yml` para mostrar el botón Sponsor. GitHub documenta proveedores admitidos y enlaces personalizados. Una futura extensión también admite metadatos de donaciones, sujetos a sus reglas. No se crean perfiles, cuentas ni promesas de beneficios de pago en esta preparación.
-
-Fuentes oficiales: [botón Sponsor en GitHub](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository), [metadatos de extensiones](https://gjs.guide/extensions/overview/anatomy.html).
+Las fuentes integradas conservan sus licencias propias: no deben presentarse como relicenciadas bajo GPL. Verificá estas obligaciones para el artefacto concreto antes de distribuirlo públicamente. Para publicar solo el repositorio, seguí [PUBLICATION.md](PUBLICATION.md).

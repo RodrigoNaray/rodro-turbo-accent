@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Copyright © 2026 Rodrigo Naray
+# SPDX-License-Identifier: GPL-3.0-only
+
 """IBus real en D-Bus privado; HOME/runtime temporales. No usa systemd/GNOME.
 
 Requiere ibus-daemon, dbus-run-session, /usr/bin/python3 y GI IBus.
