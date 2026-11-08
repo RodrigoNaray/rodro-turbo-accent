@@ -4,7 +4,7 @@
 
 A Linux tool for typing **á, é, í, ó, ú and ñ** while keeping a US keyboard layout. Built with a Rust desktop interface and a Python IBus engine.
 
-Hold a vowel or **N** for at least **250 ms**, then press **Space** without releasing the letter. Uppercase letters work too. For example, holding `a` and pressing Space produces `á`. Pressing Space earlier keeps the plain letter and the space.
+Hold a vowel or **N** for **250 ms** to preview its accented form. Press **Space** while holding the letter to insert the accent immediately, or release the letter to keep the original. Uppercase works too. An early Space keeps the plain letter and the space.
 
 ## Motivation and status
 
@@ -58,7 +58,7 @@ Opening the GUI displays status. Its management buttons modify the real per-user
 1. Build and open the application. Alternatively, extract a CI artifact from **Actions → Compilar Linux**, verify its SHA-256 checksum and run `./rodro-turbo-accent`. Check that the artifact matches the intended source revision. Rust is not required to use a built binary.
 2. Click **Instalar** (Install). It copies the executable, engine, launcher and user service, then enables and starts the engine. **Actualizar / Reinstalar** updates an existing installation.
 3. **On** enables accented input and automatic startup. **Off** stops it and disables startup. Off restores US when this engine is selected; another selected engine is preserved.
-4. Hold a supported letter for at least 250 ms and press Space. Release the letter before typing the next one. Space is consumed to produce the accent; press Space again if you need a word separator.
+4. Hold `n` until you see an underlined `ñ`, then press Space to insert it.
 5. **Actualizar estado** refreshes service/IBus status. **Logs** shows the last 80 journal entries for the service. **Desinstalar** asks for confirmation, stops the service and removes application-owned files.
 
 Closing the window leaves the service active. The GUI waits for a pending management operation before closing. Uninstallation does not remove your checkout, downloaded archive, extracted package or unrelated files.

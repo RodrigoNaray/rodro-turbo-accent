@@ -170,7 +170,8 @@ class AccentTests(unittest.TestCase):
             state.event(ord(base), 38, 0)
             self.now = 0.250
             self.assertEqual(state.event(32, 65, 0)[1][-1], ("commit", accent))
-            self.assertEqual(state.event(ord(base), 38, state.RELEASE_MASK), (False, []))
+            self.assertEqual(state.event(ord(base), 38, state.RELEASE_MASK), (True, []))
+            self.assertEqual(state.event(0xff0d, 36, 0), (False, []))
 
     def test_early_space_keeps_plain_letter_and_passes_space(self):
         for base in engine.ACCENTS:
@@ -198,6 +199,7 @@ class AccentTests(unittest.TestCase):
         self.assertEqual(state.event(ord("a"), 38, 0), (True, []))
         self.now = 0.250
         self.assertEqual(state.event(32, 65, 0)[1][-1], ("commit", "á"))
+        self.assertEqual(state.event(32, 65, 0), (True, []))
 
     def test_release_before_space_never_accents(self):
         state = self.state()

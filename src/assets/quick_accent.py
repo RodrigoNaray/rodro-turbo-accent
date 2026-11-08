@@ -28,7 +28,7 @@ ACCENTS = {
 class AccentState:
     """Lógica sin IBus: facilita pruebas y evita acceder a otras teclas.
 
-    Las acciones son ('preedit', str), ('commit', str) y ('clear', '').
+    Espacio confirma la variante después del tiempo mínimo.
     """
 
     RELEASE_MASK = 1 << 30
@@ -39,6 +39,7 @@ class AccentState:
     def __init__(self, min_hold_seconds=MIN_HOLD_SECONDS, clock=time.monotonic):
         self.min_hold_seconds = min_hold_seconds
         self.clock = clock
+        self.consumed_keys = set()
         self.pending: tuple[str, int, float] | None = None
 
     def flush(self):
@@ -49,12 +50,17 @@ class AccentState:
         return [("clear", ""), ("commit", char)]
 
     def cancel(self):
+        self.consumed_keys.clear()
         self.pending = None
         return [("clear", "")]
 
     def event(self, keyval: int, keycode: int, state: int):
         released = bool(state & self.RELEASE_MASK)
         actions = []
+        if keycode in self.consumed_keys:
+            if released:
+                self.consumed_keys.remove(keycode)
+            return True, []
         if released:
             if self.pending is not None and self.pending[1] == keycode:
                 return True, self.flush()
@@ -68,10 +74,12 @@ class AccentState:
             if (keyval == 0x20 and not is_modified
                     and self.clock() - pressed_at >= self.min_hold_seconds):
                 self.pending = None
+                self.consumed_keys.update((keycode, pending_keycode))
                 return True, [("clear", ""), ("commit", ACCENTS[char])]
-            if keycode == pending_keycode:  # repetición automática de la letra mantenida
+            elif keycode == pending_keycode:  # repetición automática de la letra mantenida
                 return True, []
-            actions.extend(self.flush())
+            else:
+                actions.extend(self.flush())
 
         if not is_modified and keyval < 128 and chr(keyval) in ACCENTS:
             char = chr(keyval)
@@ -202,11 +210,27 @@ def run_ibus():
             super().__init__(**kwargs)
             self.logic = AccentState()
             self.sensitive = False
+            self.timer = 0
+
+        def _ready(self):
+            self.timer = 0
+            if self.logic.pending:
+                accent = IBus.Text.new_from_string(ACCENTS[self.logic.pending[0]])
+                accent.append_attribute(IBus.AttrType.UNDERLINE, IBus.AttrUnderline.DOUBLE, 0, 1)
+                accent.append_attribute(IBus.AttrType.FOREGROUND, 0x29975D, 0, 1)
+                self.update_preedit_text(accent, 1, True)
+            return False
 
         def _actions(self, actions):
             for kind, value in actions:
+                if self.timer:
+                    GLib.source_remove(self.timer)
+                    self.timer = 0
                 if kind == "preedit":
-                    self.update_preedit_text(IBus.Text.new_from_string(value), len(value), True)
+                    self.timer = GLib.timeout_add(round(MIN_HOLD_SECONDS * 1000), self._ready)
+                    plain = IBus.Text.new_from_string(value)
+                    plain.append_attribute(IBus.AttrType.UNDERLINE, IBus.AttrUnderline.SINGLE, 0, 1)
+                    self.update_preedit_text(plain, 1, True)
                 elif kind == "clear":
                     self.update_preedit_text(IBus.Text.new_from_string(""), 0, False)
                 elif kind == "commit":
@@ -227,9 +251,11 @@ def run_ibus():
                 self._actions(self.logic.cancel())
 
         def do_focus_out(self):
+            self.logic.consumed_keys.clear()
             self._actions(self.logic.flush())
 
         def do_disable(self):
+            self.logic.consumed_keys.clear()
             self._actions(self.logic.flush())
 
         def do_reset(self):
@@ -320,7 +346,8 @@ if __name__ == "__main__":
         assert a.event(ord("a"), 38, 0) == (True, [("preedit", "a")])
         now[0] = MIN_HOLD_SECONDS
         assert a.event(ord(" "), 65, 0) == (True, [("clear", ""), ("commit", "á")])
-        assert a.event(ord("a"), 38, a.RELEASE_MASK) == (False, [])
+        assert a.event(ord("a"), 38, a.RELEASE_MASK) == (True, [])
+        assert a.event(0xff0d, 36, 0) == (False, [])
         b = AccentState()
         b.event(ord("n"), 57, 0)
         assert b.event(ord("n"), 57, b.RELEASE_MASK) == (True, [("clear", ""), ("commit", "n")])

@@ -4,7 +4,7 @@
 
 Herramienta para Linux que permite escribir **á, é, í, ó, ú y ñ** manteniendo una distribución de teclado estadounidense. Desarrollada con una interfaz de escritorio en Rust y un motor IBus en Python.
 
-Mantené una vocal o **N** durante al menos **250 ms** y pulsá **Espacio** sin soltarla. También funciona con mayúsculas. Por ejemplo, mantener `a` y pulsar Espacio produce `á`. Si Espacio llega antes, se conservan la letra normal y el espacio.
+Mantené una vocal o **N** durante **250 ms** para ver su variante acentuada. Pulsá **Espacio** sin soltar la letra para insertarla directamente, o soltá la letra para conservar la original. También funciona con mayúsculas. Si pulsás Espacio antes, se conservan la letra normal y el espacio.
 
 ## Motivación y estado
 
@@ -58,7 +58,7 @@ Abrir la interfaz muestra el estado. Sus botones de gestión modifican la instal
 1. Compilá y abrí la aplicación. También podés extraer un artefacto de CI desde **Actions → Compilar Linux**, verificar su checksum SHA-256 y ejecutar `./rodro-turbo-accent`. Comprobá que corresponda a la revisión de código prevista. No se necesita Rust para usar un binario compilado.
 2. Pulsá **Instalar**. Copia el ejecutable, motor, lanzador y servicio de usuario, y después habilita e inicia el motor. **Actualizar / Reinstalar** actualiza una instalación existente.
 3. **On** activa los acentos y su inicio automático. **Off** los detiene y deshabilita el inicio automático. Off restaura US si está seleccionado este motor; conserva otro motor seleccionado.
-4. Mantené una letra admitida al menos 250 ms y pulsá Espacio. Soltá la letra antes de escribir la siguiente. Espacio se consume al producir el acento; pulsalo otra vez si necesitás separar palabras.
+4. Mantené `n` hasta ver la `ñ` subrayada y pulsá Espacio para insertarla.
 5. **Actualizar estado** consulta el servicio e IBus. **Logs** muestra las últimas 80 entradas del journal del servicio. **Desinstalar** pide confirmación, detiene el servicio y elimina los archivos administrados por la aplicación.
 
 Cerrar la ventana mantiene el servicio activo. La interfaz espera a que termine una operación de gestión pendiente antes de cerrarse. La desinstalación no elimina el repositorio, el archivo descargado, el paquete extraído ni archivos ajenos.

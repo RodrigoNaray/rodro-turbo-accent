@@ -149,7 +149,7 @@ impl RodroTurboAccentApp {
         ui.add_space(10.0);
         ui.heading("Rodro Turbo Accent");
         ui.horizontal_wrapped(|ui| {
-            ui.label("Mantené una vocal o N durante 250 ms y pulsá Espacio");
+            ui.label("Mantené una vocal o N hasta ver el indicador (250 ms)");
             // Dibujar la flecha evita depender de un glifo que puede faltar.
             let (rect, _) = ui.allocate_exact_size(egui::vec2(30.0, 24.0), egui::Sense::hover());
             ui.painter().arrow(
@@ -157,7 +157,7 @@ impl RodroTurboAccentApp {
                 egui::vec2(24.0, 0.0),
                 egui::Stroke::new(2.0_f32, ui.visuals().text_color()),
             );
-            ui.label("á é í ó ú ñ");
+            ui.label("Pulsá Espacio para insertar la letra acentuada");
         });
         ui.label("Distribución US · sin sudo · sin acceso directo a /dev/input");
         ui.add_space(12.0);

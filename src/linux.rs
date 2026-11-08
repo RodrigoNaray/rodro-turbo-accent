@@ -396,7 +396,14 @@ pub fn uninstall() -> Result<String, String> {
     stop_service()?;
     fs::remove_file(unit).map_err(|e| e.to_string())?;
     systemctl(&["daemon-reload"])?;
-    for path in [&engine_file, &desktop, &executable, &marker_file] {
+    let old_preference = app.join("violet-preview.enabled");
+    for path in [
+        &engine_file,
+        &desktop,
+        &executable,
+        &old_preference,
+        &marker_file,
+    ] {
         if path.exists() {
             fs::remove_file(path).map_err(|e| format!("No pude borrar {}: {e}", path.display()))?;
         }
